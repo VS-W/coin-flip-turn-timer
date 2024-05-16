@@ -407,7 +407,7 @@ const textureLoader = new THREE.TextureLoader();
 
 let textureTop, textureBottom;
 
-textureLoader.load('/rice_ball_circle_bottom.png',
+textureLoader.load('circle_bottom.png',
 	function(texture) {
 		textureBottom = texture;
 		textureBottom.colorSpace = THREE.SRGBColorSpace;
@@ -418,7 +418,7 @@ textureLoader.load('/rice_ball_circle_bottom.png',
 	}
 );
 
-textureLoader.load('/rice_ball_circle_top.png',
+textureLoader.load('circle_top.png',
 	function(texture) {
 		textureTop = texture;
 		textureTop.colorSpace = THREE.SRGBColorSpace;
