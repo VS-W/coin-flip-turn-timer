@@ -65,7 +65,7 @@ class TimeCanvasObject {
 			this.fontReady = document.fonts.check("1em Wellfleet");
 		}
 
-		if (window.innerWidth < window.innerHeight) {
+		if (window.visualViewport.width < window.visualViewport.height) {
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 
@@ -98,8 +98,8 @@ class TimeCanvasObject {
 	}
 
 	setCanvasDimensions() {
-		this.canvas.width = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		this.canvas.width = window.visualViewport.width;
+		this.canvas.height = window.visualViewport.height;
 	}
 
 	fadeOut() {
@@ -169,7 +169,7 @@ class StatusCanvasObject {
 		}
 
 		if (!this.finished) {
-			if (window.innerWidth < window.innerHeight) {
+			if (window.visualViewport.width < window.visualViewport.height) {
 				this.ctx.save();
 				this.ctx.rotate((Math.PI / 180) * 90);
 	
@@ -196,8 +196,8 @@ class StatusCanvasObject {
 	}
 
 	setCanvasDimensions() {
-		this.canvas.width = window.innerWidth;
-		this.canvas.height = window.innerHeight;
+		this.canvas.width = window.visualViewport.width;
+		this.canvas.height = window.visualViewport.height;
 	}
 }
 
@@ -368,7 +368,7 @@ function animate() {
 }
 
 function setCoinCanvasRotation() {
-	if (window.innerWidth < window.innerHeight) {
+	if (window.visualViewport.width < window.visualViewport.height) {
 		renderer.domElement.style = `
 			position: absolute;
 			top: 0;
@@ -377,17 +377,17 @@ function setCoinCanvasRotation() {
 			transform: rotate(90deg) translate(100%, 0);
 			transform-origin: 100% 0;
 		`;
-		camera.aspect = window.innerHeight / window.innerWidth;
+		camera.aspect = window.visualViewport.height / window.visualViewport.width;
 		camera.updateProjectionMatrix();
 	
-		renderer.setSize(window.innerHeight, window.innerWidth);
+		renderer.setSize(window.visualViewport.height, window.visualViewport.width);
 		renderer.render(scene, camera);
 	} else {
 		renderer.domElement.style = "position: absolute; top: 0; left: 0; z-index: 0;";
-		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.aspect = window.visualViewport.width / window.visualViewport.height;
 		camera.updateProjectionMatrix();
 
-		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setSize(window.visualViewport.width, window.visualViewport.height);
 		renderer.render(scene, camera);
 	}
 }
@@ -396,7 +396,7 @@ const timeDisplay = new TimeCanvasObject();
 const statusDisplay = new StatusCanvasObject();
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.visualViewport.width / window.visualViewport.height, 0.1, 1000);
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const renderer = new THREE.WebGLRenderer(
@@ -451,8 +451,8 @@ window.addEventListener('resize', function () {
 
 renderer.domElement.addEventListener('click', function(event) {
 	if (!cylinder.disableClick) {
-		mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-		mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		mouse.x = (event.clientX / window.visualViewport.width) * 2 - 1;
+		mouse.y = -(event.clientY / window.visualViewport.height) * 2 + 1;
 		raycaster.setFromCamera(mouse, camera);
 	
 		if (raycaster.intersectObjects(scene.children).length > 0) {
