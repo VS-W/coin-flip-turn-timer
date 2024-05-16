@@ -4,14 +4,18 @@ class TimeCanvasObject {
 	constructor() {
 		this.canvas = document.getElementById("timeCanvas");
 		this.ctx = this.canvas.getContext("2d");
+		
+		this.fontReady = document.fonts.check("1em Wellfleet");
+		if (this.fontReady) {
+			const formattedTime = this.formatTime(new Date());
+			this.fontSize = 80;
+			this.ctx.font = this.fontSize + "px Wellfleet";
+			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
+			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
+			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+		}
 
 		this.opacity = 1;
-		const formattedTime = this.formatTime(new Date());
-		this.fontSize = 80;
-		this.ctx.font = this.fontSize + "px Wellfleet";
-		this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
-		this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-		this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
 
 		this.setCanvasDimensions();
 		this.draw();
@@ -52,6 +56,14 @@ class TimeCanvasObject {
 		this.ctx.shadowOffsetX = 4;
 		this.ctx.shadowOffsetY = 4;
 		this.ctx.shadowBlur = 5;
+
+		if (!this.fontReady) {
+			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
+			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
+			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+			this.ctx.font = this.fontSize + "px Wellfleet";
+			this.fontReady = document.fonts.check("1em Wellfleet");
+		}
 
 		if (window.innerWidth < window.innerHeight) {
 			this.ctx.save();
@@ -151,7 +163,20 @@ class StatusCanvasObject {
 		}
 
 		if (!this.finished) {
-			this.ctx.fillText(this.text, this.canvas.width / 2, this.position);
+			if (window.innerWidth < window.innerHeight) {
+				this.ctx.save();
+				this.ctx.rotate((Math.PI / 180) * 90);
+	
+				this.ctx.fillText(this.text,
+					(this.canvas.height / 2), 
+					(-1 * this.canvas.width) + this.position
+				);
+
+				this.ctx.restore();
+			} else {
+				this.ctx.fillText(this.text, this.canvas.width / 2, this.position);
+			}
+
 			window.requestAnimationFrame(() => {
 				this.drawStatus(this.text);
 			});
@@ -289,11 +314,14 @@ function animate() {
 		renderer.render(scene, camera);
 	} else {
 		renderer.render(scene, camera);
+
 		setTimeout(zoomCamera, 500);
 		setTimeout(() => {
 			statusDisplay.drawStatus(cylinder.result);
 		}, 700);
-		setTimeout(() => {
+
+		timeDisplay.fadeInTimeout = setTimeout(() => {
+			timeDisplay.canFadeIn = true;
 			timeDisplay.fadeIn();
 		}, 3000);
 	}
@@ -363,6 +391,8 @@ const statusDisplay = new StatusCanvasObject();
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 const renderer = new THREE.WebGLRenderer(
 	{
 		alpha: true,
@@ -413,10 +443,17 @@ window.addEventListener('resize', function () {
 	setCoinCanvasRotation();
 }, false);
 
-renderer.domElement.addEventListener('click', function() {
+renderer.domElement.addEventListener('click', function(event) {
 	if (!cylinder.disableClick) {
-		cylinder.disableClick = true;
-		timeDisplay.fadeOut();
-		flipCoin(camera, cylinder, true);
+		mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+		mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+		raycaster.setFromCamera(mouse, camera);
+	
+		if (raycaster.intersectObjects(scene.children).length > 0) {
+			cylinder.disableClick = true;
+			clearTimeout(timeDisplay.fadeInTimeout);
+			timeDisplay.fadeOut();
+			flipCoin(camera, cylinder, true);
+		}
 	}
 });
