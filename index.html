@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="icon" href="/favicon.ico">
+	
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Wellfleet&display=swap" rel="stylesheet">
+
+	<title>* test *</title>
+	<style>
+		html {
+			background: blue;
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			height: 100%;
+		}
+		body {
+			width: 100%;
+			height: 100%;
+			background: #222;
+			overflow: hidden;
+			margin: 0;
+			padding: 0;
+		}
+
+		#statusCanvas {
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: 5;
+			pointer-events: none;
+		}
+
+		.time {
+			font-family: "Wellfleet", monospace;
+			text-align: center;
+			font-size: 4em;
+			text-shadow: 0.01em 0.01em 0.02em rgb(0, 0, 0);
+			color: white;
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+
+		.clock span {
+			/* width: 100%; */
+			/* left: 50%; */
+			font-size: 0.5em;
+		}
+
+		.left-timer {
+			transform: rotate(90deg);
+			top: 0;
+			left: 0;
+			width: 100vh;
+			height: 100vw;
+			background-color: rgb(255, 228, 228);
+		}
+		.right-timer {
+			transform: rotate(-90deg);
+			/* top: 40%;
+			right: 0%; */
+		}
+	</style>
+
+	<script type="importmap">
+		{
+			"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+			}
+		}
+	</script>
+</head>
+
+<body>
+	<canvas id="statusCanvas"></canvas>
+	<canvas id="timeCanvas"></canvas>
+
+<!-- 
+	<div id="clock" class="time clock">12:34<span> PM</span></div>
+	<div id="p1timer" class="time left-timer">00:56</div>
+	<div id="p2timer" class="time right-timer">00:39</div> -->
+
+	<script type="module" src="/main.js"></script>
+</body>
+
+</html>
