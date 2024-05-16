@@ -370,7 +370,7 @@ function animate() {
 function setCoinCanvasRotation() {
 	if (window.visualViewport.width < window.visualViewport.height) {
 		renderer.domElement.style = `
-			position: absolute;
+			position: fixed;
 			top: 0;
 			right: 0;
 			z-index: 0;
@@ -383,7 +383,7 @@ function setCoinCanvasRotation() {
 		renderer.setSize(window.visualViewport.height, window.visualViewport.width);
 		renderer.render(scene, camera);
 	} else {
-		renderer.domElement.style = "position: absolute; top: 0; left: 0; z-index: 0;";
+		renderer.domElement.style = "position: fixed; top: 0; left: 0; z-index: 0;";
 		camera.aspect = window.visualViewport.width / window.visualViewport.height;
 		camera.updateProjectionMatrix();
 
