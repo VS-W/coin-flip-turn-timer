@@ -69,22 +69,25 @@ class TimeCanvasObject {
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 
-			this.ctx.fillText(formattedTime.time,
+			this.ctx.fillText(
+				formattedTime.time,
 				(this.canvas.height / 2) - (this.renderedTextMetrics.width / 2) - this.renderedSubTextMetrics.width, 
 				(-1 * this.canvas.width) + 96
 			);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-			const hShift = (this.canvas.height / 2) + (this.renderedTextMetrics.width / 2 + 8) - this.renderedSubTextMetrics.width;
-			this.ctx.fillText(formattedTime.ampm, hShift, (-1 * this.canvas.width) + 96);
+			this.ctx.fillText(
+				formattedTime.ampm,
+				(this.canvas.height / 2) + (this.renderedTextMetrics.width / 2) - this.renderedSubTextMetrics.width + 8,
+				(-1 * this.canvas.width) + 96
+			);
 	
 			this.ctx.restore();
 		} else {
 			this.ctx.fillText(formattedTime.time, (this.canvas.width / 2) - (this.renderedTextMetrics.width / 2), 96);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-			const hShift = (this.canvas.width / 2) + (this.renderedTextMetrics.width / 2 + 8);
-			this.ctx.fillText(formattedTime.ampm, hShift, 96);
+			this.ctx.fillText(formattedTime.ampm, (this.canvas.width / 2) + (this.renderedTextMetrics.width / 2) + 8, 96);
 		}
 
 		setTimeout(() => {
@@ -100,17 +103,20 @@ class TimeCanvasObject {
 	}
 
 	fadeOut() {
+		this.fadingOut = true;
 		if (this.opacity > 0) {
 			this.opacity -= 0.06;
 			window.requestAnimationFrame(() => {
 				this.fadeOut();
 				this.draw();
 			});
+		} else {
+			this.fadingOut = false;
 		}
 	}
 
 	fadeIn() {
-		if (this.opacity < 1) {
+		if (!this.fadingOut && this.opacity < 1) {
 			this.opacity += 0.025;
 			window.requestAnimationFrame(() => {
 				this.fadeIn();
