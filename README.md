@@ -8,7 +8,7 @@ A simple turn timer with a coin flip function.
 
 Designed to be used on a phone/tablet placed between the players.
 
-Currently tracks the total time taken by a player.
+Currently tracks the *total* time taken by a player.
 
 ## TODO:
 - Add display for current player turn time.
