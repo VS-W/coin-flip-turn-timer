@@ -1,5 +1,7 @@
 # Turn Timer + Coin Flip
 
+## https://vs-w.github.io/coin-flip-turn-timer/
+
 A simple turn timer with a coin flip function. Designed to be used on a phone/tablet placed between the players.
 
 Tap on the green button or the time display to start the timer for that player. Tapping on the opposing button/time display will switch to tracking that player's time. When the timer is active, the current player's button will change a red pause button enabling that player to pause their timer.
