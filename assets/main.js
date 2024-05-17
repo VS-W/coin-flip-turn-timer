@@ -147,6 +147,7 @@ class UICanvasObject {
 				if (raycaster.intersectObjects(scene.children).length > 0) {
 					cylinder.disableClick = true;
 					clearTimeout(timeDisplay.fadeInTimeout);
+					clearTimeout(uiDisplay.fadeInTimeout);
 					uiDisplay.fadeOut();
 					timeDisplay.fadeOut();
 					flipCoin(camera, cylinder, true);
