@@ -1,6 +1,4 @@
-# Turn Timer + Coin Flip
-
-## https://vs-w.github.io/coin-flip-turn-timer/
+# [Turn Timer + Coin Flip](https://vs-w.github.io/coin-flip-turn-timer/)
 
 A simple turn timer with a coin flip function. Designed to be used on a phone/tablet placed between the players.
 
