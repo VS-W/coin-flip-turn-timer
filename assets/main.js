@@ -13,8 +13,6 @@ class PlayerTimers {
 	resetTimes() {
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
-		
-		this.currentPlayer = "a";
 		this.timerRunning = false;
 		this.turnStartTime = false;
 	}
@@ -76,7 +74,7 @@ class UICanvasObject {
 
 		this.timeDisplay = timeDisplay;
 
-		this.iconSize = 60;
+		this.iconSize = ICON_SIZE;
 		this.padding = this.iconSize / 4;
 		this.opacity = 1;
 		
@@ -166,6 +164,23 @@ class UICanvasObject {
 		return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
 	}
 
+	setShadow(button) {
+		switch (button) {
+			case this.playBtn:
+				this.ctx.shadowColor = `rgba(0, 180, 0, 0.6)`;
+				break;		
+			case this.pauseBtn:
+				this.ctx.shadowColor = `rgba(180, 0, 0, 0.6)`;
+				break;		
+			case this.refreshBtn:
+				this.ctx.shadowColor = `rgba(235, 131, 52, 0.5)`;
+				break;		
+			case this.fullscreenBtn:
+				this.ctx.shadowColor = `rgba(237, 0, 229, 0.5)`;
+				break;	
+		}	
+	}
+
 	draw() {
 		if (!this.timeDisplay.fontReady) {
 			setTimeout(() => {
@@ -193,16 +208,22 @@ class UICanvasObject {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.ctx.globalAlpha = this.opacity;
 
+		let buttonSizeModifier = 0;
+
 		if (window.visualViewport.width < window.visualViewport.height) {
+			if (TAP_TIME_ENABLED) {
+				buttonSizeModifier = this.timeDisplay.renderedPlayerClockTextMetrics.width + this.padding;
+			}
 			// pA coords
 			this.playerAButtonCoords = [
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
-					- this.padding,
+					- this.padding
+					+ (ICON_SIZE / 2),
 				(this.iconSize)
 					- (this.padding * 2),
-				this.iconSize, this.iconSize
+				this.iconSize + buttonSizeModifier, this.iconSize
 			];
 			
 			// pB coords
@@ -210,22 +231,25 @@ class UICanvasObject {
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
-					- this.padding,
+					- this.padding
+					+ (ICON_SIZE / 2),
 				(this.canvas.height)
 					- (this.iconSize)
 					- (this.padding * 2),
-				this.iconSize, this.iconSize
+				this.iconSize + buttonSizeModifier, this.iconSize
 			];
 			
 			// pA button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
 
+			this.setShadow(this.playerAButton);
 			this.ctx.drawImage(
 				this.playerAButton,
 				-(this.canvas.width / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
-					+ this.padding, 
+					+ this.padding
+					- (ICON_SIZE / 2), 
 				-(this.iconSize * 1.5),
 				this.iconSize, this.iconSize
 			);
@@ -233,64 +257,68 @@ class UICanvasObject {
 			this.ctx.restore();
 
 			// pB button
+			this.ctx.save();
+
+			this.setShadow(this.playerBButton);
 			this.ctx.drawImage(
 				this.playerBButton,
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
-					- this.padding,
+					- this.padding
+					+ (ICON_SIZE / 2),
 				(this.canvas.height)
 					- (this.iconSize * 1.5),
 				this.iconSize, this.iconSize
 			);
 
-			this.ctx.drawImage(
-				this.fullscreenBtn,
-				this.canvas.width - (this.iconSize * 1.5),
-				(this.canvas.height / 2) - 
-					(this.timeDisplay.renderedTextMetrics.width / 2) -
-					(this.timeDisplay.renderedSubTextMetrics.width) -
-					(this.padding * 2) -
-					this.iconSize,
-				this.iconSize, this.iconSize
-			);
+			this.ctx.restore();
+
+			this.ctx.save();
+			this.setShadow(this.fullscreenBtn);
 			this.fullscreenButtonCoords = [
 				this.canvas.width - (this.iconSize * 1.5),
-				(this.canvas.height / 2) - 
-					(this.timeDisplay.renderedTextMetrics.width / 2) -
-					(this.timeDisplay.renderedSubTextMetrics.width) -
-					(this.padding * 2) -
-					this.iconSize,
+				(this.canvas.height / 2)
+					- (this.timeDisplay.renderedTextMetrics.width / 2)
+					- (this.timeDisplay.renderedSubTextMetrics.width /  2)
+					- (this.padding * 3)
+					- this.iconSize,
 				this.iconSize, this.iconSize
 			];
-
 			this.ctx.drawImage(
-				this.refreshBtn,
-				this.canvas.width - (this.iconSize * 1.5),
-				(this.canvas.height / 2) +
-					(this.timeDisplay.renderedTextMetrics.width / 2) +
-					(this.timeDisplay.renderedSubTextMetrics.width) +
-					(this.padding * 2) -
-					this.iconSize,
-				this.iconSize, this.iconSize
+				this.fullscreenBtn,
+				...this.fullscreenButtonCoords
 			);
+			this.ctx.restore();
+
+			this.ctx.save();
+			this.setShadow(this.refreshBtn);
 			this.refreshButtonCoords = [
 				this.canvas.width - (this.iconSize * 1.5),
-				(this.canvas.height / 2) +
-					(this.timeDisplay.renderedTextMetrics.width / 2) +
-					(this.timeDisplay.renderedSubTextMetrics.width) +
-					(this.padding * 2) -
-					this.iconSize,
+				(this.canvas.height / 2)
+					+ (this.timeDisplay.renderedTextMetrics.width / 2)
+					+ (this.timeDisplay.renderedSubTextMetrics.width / 2)
+					+ (this.padding * 3),
 				this.iconSize, this.iconSize
 			];
+			this.ctx.drawImage(
+				this.refreshBtn,
+				...this.refreshButtonCoords
+			);
+			this.ctx.restore();
 		} else {
+			if (TAP_TIME_ENABLED) {
+				buttonSizeModifier = this.timeDisplay.renderedPlayerClockTextMetrics.width + this.padding;
+			}
 			// pA coords
 			this.playerAButtonCoords = [
 				(this.iconSize / 2),
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
-					+ this.padding,
-				this.iconSize, this.iconSize
+					+ this.padding
+					- (ICON_SIZE / 2)
+					- buttonSizeModifier,
+				this.iconSize, this.iconSize + buttonSizeModifier
 			];
 			
 			// pB coords
@@ -298,19 +326,23 @@ class UICanvasObject {
 				this.canvas.width - (this.iconSize * 1.5),
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
-					+ this.padding,
-				this.iconSize, this.iconSize
+					+ this.padding
+					- (ICON_SIZE / 2)
+					- buttonSizeModifier,
+				this.iconSize, this.iconSize + buttonSizeModifier
 			];
 
 			// pA button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 			
+			this.setShadow(this.playerAButton);
 			this.ctx.drawImage(
 				this.playerAButton,
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
-					+ this.padding, 
+					+ this.padding
+					- (ICON_SIZE / 2), 
 				-(this.iconSize * 1.5),
 				this.iconSize, this.iconSize
 			);
@@ -320,54 +352,59 @@ class UICanvasObject {
 			// pB button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * -90);
+
+			this.setShadow(this.playerBButton);
 			this.ctx.drawImage(
 				this.playerBButton,
 				-(this.canvas.height / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- this.iconSize
-					- this.padding, 
+					- this.padding
+					+ (ICON_SIZE / 2), 
 				this.canvas.width - (this.iconSize * 1.5),
 				this.iconSize, this.iconSize
 			);
 
 			this.ctx.restore();
-			
-			this.ctx.drawImage(
-				this.refreshBtn,
-				(this.canvas.width / 2)
-					+ (this.timeDisplay.renderedTextMetrics.width / 2)
-					+ (this.timeDisplay.renderedSubTextMetrics.width)
-					+ (this.padding * 2),
-				(this.iconSize / 2),
-				this.iconSize, this.iconSize
-			);
+
+			this.ctx.save();
+			this.setShadow(this.refreshBtn);
 			this.refreshButtonCoords = [
 				(this.canvas.width / 2)
 					+ (this.timeDisplay.renderedTextMetrics.width / 2)
-					+ (this.timeDisplay.renderedSubTextMetrics.width)
-					+ (this.padding * 2),
+					+ (this.timeDisplay.renderedSubTextMetrics.width / 2)
+					+ (this.padding * 3),
 				(this.iconSize / 2),
 				this.iconSize, this.iconSize
 			];
-
 			this.ctx.drawImage(
-				this.fullscreenBtn,
-				(this.canvas.width / 2)
-					- (this.timeDisplay.renderedTextMetrics.width / 2)
-					- (this.timeDisplay.renderedSubTextMetrics.width)
-					- (this.padding * 2),
-				(this.iconSize / 2),
-				this.iconSize, this.iconSize
+				this.refreshBtn,
+				...this.refreshButtonCoords
 			);
+			this.ctx.restore();
+
+			this.ctx.save();
+			this.setShadow(this.fullscreenBtn);
 			this.fullscreenButtonCoords = [
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedTextMetrics.width / 2)
-					- (this.timeDisplay.renderedSubTextMetrics.width)
-					- (this.padding * 2),
+					- (this.timeDisplay.renderedSubTextMetrics.width / 2)
+					- (this.padding * 3)
+					- this.iconSize,
 				(this.iconSize / 2),
 				this.iconSize, this.iconSize
 			];
+			this.ctx.drawImage(
+				this.fullscreenBtn,
+				...this.fullscreenButtonCoords
+			);
+			this.ctx.restore();
 		}
+
+		// this.ctx.fillRect(...this.playerAButtonCoords);
+		// this.ctx.fillRect(...this.playerBButtonCoords);
+		// this.ctx.fillRect(...this.fullscreenButtonCoords);
+		// this.ctx.fillRect(...this.refreshButtonCoords);
 	}
 
 	setCanvasDimensions() {
@@ -499,14 +536,19 @@ class TimeCanvasObject {
 
 			this.ctx.fillText(
 				formattedTime.time,
-				(this.canvas.height / 2) - (this.renderedTextMetrics.width / 2) - this.renderedSubTextMetrics.width, 
+				(this.canvas.height / 2)
+					- (this.renderedTextMetrics.width / 2)
+					- (this.renderedSubTextMetrics.width / 2)
+					- 8, 
 				(-1 * this.canvas.width) + 96
 			);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 			this.ctx.fillText(
 				formattedTime.ampm,
-				(this.canvas.height / 2) + (this.renderedTextMetrics.width / 2) - this.renderedSubTextMetrics.width + 8,
+				(this.canvas.height / 2)
+					+ (this.renderedTextMetrics.width / 2)
+					- (this.renderedSubTextMetrics.width / 2),
 				(-1 * this.canvas.width) + 96
 			);
 	
@@ -519,7 +561,7 @@ class TimeCanvasObject {
 			
 			this.ctx.fillText(
 				pATime,
-				-(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
+				-(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
 	
@@ -528,15 +570,28 @@ class TimeCanvasObject {
 			// pB clock
 			this.ctx.fillText(
 				pBTime,
-				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
+				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.height - (this.playerClockFontSize / 1.5)
 			);
 		} else {
 			// main clock
-			this.ctx.fillText(formattedTime.time, (this.canvas.width / 2) - (this.renderedTextMetrics.width / 2), 96);
+			this.ctx.fillText(
+				formattedTime.time,
+				(this.canvas.width / 2)
+					- (this.renderedTextMetrics.width / 2)
+					- (this.renderedSubTextMetrics.width / 2)
+					- 8,
+				96
+			);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-			this.ctx.fillText(formattedTime.ampm, (this.canvas.width / 2) + (this.renderedTextMetrics.width / 2) + 8, 96);
+			this.ctx.fillText(
+				formattedTime.ampm,
+				(this.canvas.width / 2)
+					+ (this.renderedTextMetrics.width / 2)
+					- (this.renderedSubTextMetrics.width / 2), 
+				96
+			);
 
 			// pA clock
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
@@ -545,7 +600,7 @@ class TimeCanvasObject {
 			
 			this.ctx.fillText(
 				pATime,
-				(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
+				(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
 
@@ -557,7 +612,7 @@ class TimeCanvasObject {
 			
 			this.ctx.fillText(
 				pBTime,
-				-(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
+				-(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.width - (this.playerClockFontSize / 1.5)
 			);
 			this.ctx.restore();
@@ -871,7 +926,8 @@ function setCoinCanvasRotation() {
 	}
 }
 
-
+const ICON_SIZE = 60;
+const TAP_TIME_ENABLED = true;
 const playerTimers = new PlayerTimers();
 const timeDisplay = new TimeCanvasObject(playerTimers);
 const uiDisplay = new UICanvasObject(timeDisplay, playerTimers);
