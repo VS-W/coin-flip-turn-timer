@@ -1,7 +1,76 @@
 import * as THREE from 'three';
 
+class PlayerTimers {
+	constructor() {
+		this.playerATimeTotal = 0;
+		this.playerBTimeTotal = 0;
+		
+		this.currentPlayer = "a";
+		this.timerRunning = false;
+		this.turnStartTime = false;
+	}
+
+	resetTimes() {
+		this.playerATimeTotal = 0;
+		this.playerBTimeTotal = 0;
+		
+		this.currentPlayer = "a";
+		this.timerRunning = false;
+		this.turnStartTime = false;
+	}
+
+	getPlayerTime(player) {
+		let elapsedTime = this.timerRunning ? new Date() - this.turnStartTime : 0;
+		return this.currentPlayer == player ? this.getPlayerTimeTotal(player) + elapsedTime : this.getPlayerTimeTotal(player);
+	}
+
+	getPlayerTimeTotal(player) {
+		switch (player) {
+			case "a":
+				return this.playerATimeTotal;
+			case "b":
+				return this.playerBTimeTotal;
+		}
+	}
+
+	setPlayerTimeTotal(player) {
+		let elapsedTime = this.turnStartTime ? new Date() - this.turnStartTime : 0;
+		switch (player) {
+			case "a":
+				this.playerATimeTotal += elapsedTime;
+				break;
+			case "b":
+				this.playerBTimeTotal += elapsedTime;
+				break;
+		}
+	}
+
+	startTimer() {
+		this.timerRunning = true;
+		this.turnStartTime = new Date();
+	}
+
+	pauseTimer() {
+		this.timerRunning = false;
+		this.turnStartTime = false;
+	}
+
+	switchTurn(player) {
+		this.setPlayerTimeTotal(this.currentPlayer);
+
+		if (this.currentPlayer == player && this.timerRunning) {
+			this.pauseTimer();
+		} else {
+			this.currentPlayer = player;
+			this.startTimer();
+		}
+	}
+}
+
 class UICanvasObject {
-	constructor(timeDisplay) {
+	constructor(timeDisplay, playerTimers) {
+		this.playerTimers = playerTimers;
+
 		this.canvas = document.getElementById("uiCanvas");
 		this.ctx = this.canvas.getContext("2d");
 
@@ -16,11 +85,11 @@ class UICanvasObject {
 		this.pauseBtn = new Image(this.iconSize, this.iconSize),
 		this.fullscreenBtn = new Image(this.iconSize, this.iconSize);
 
-		this.playerOneButton = this.playBtn;
-		this.playerTwoButton = this.playBtn;
+		this.playerAButton = this.playBtn;
+		this.playerBButton = this.playBtn;
 
-		this.playerOneButtonCoords = [0, 0, 0, 0];
-		this.playerTwoButtonCoords = [0, 0, 0, 0];
+		this.playerAButtonCoords = [0, 0, 0, 0];
+		this.playerBButtonCoords = [0, 0, 0, 0];
 		this.fullscreenButtonCoords = [0, 0, 0, 0];
 		this.refreshButtonCoords = [0, 0, 0, 0];
 
@@ -49,15 +118,15 @@ class UICanvasObject {
 
 		const c = this;
 		this.canvas.addEventListener('click', function(event) {
-			if (c.clickInBox(event.clientX, event.clientY, c.playerOneButtonCoords)) {
-				console.log("clicked p1")
+			if (c.clickInBox(event.clientX, event.clientY, c.playerAButtonCoords)) {
+				playerTimers.switchTurn("a");
+				c.draw();
 			}
-			if (c.clickInBox(event.clientX, event.clientY, c.playerTwoButtonCoords)) {
-				console.log("clicked p2")
+			if (c.clickInBox(event.clientX, event.clientY, c.playerBButtonCoords)) {
+				playerTimers.switchTurn("b");
+				c.draw();
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.fullscreenButtonCoords)) {
-				console.log("clicked fullscreen")
-
 				if (!document.fullscreenElement) {
 					document.body.requestFullscreen().catch((err) => {
 						console.log(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
@@ -67,7 +136,8 @@ class UICanvasObject {
 				}
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.refreshButtonCoords)) {
-				console.log("clicked refresh")
+				playerTimers.resetTimes();
+				c.draw();
 			}
 
 			// handle click on coin
@@ -88,8 +158,8 @@ class UICanvasObject {
 	}
 
 	clickInBox(x, y, box) {
-		// console.log(x, y, box);
-		let xMin = box[0],
+		const
+			xMin = box[0],
 			xMax = box[0] + box[2],
 			yMin = box[1],
 			yMax = box[1] + box[3];
@@ -102,13 +172,30 @@ class UICanvasObject {
 				this.draw();
 			}, 500);
 		}
+		this.ctx.shadowColor = `rgba(0, 0, 0, 0.7)`;
+		this.ctx.shadowOffsetX = 0;
+		this.ctx.shadowOffsetY = 0;
+		this.ctx.shadowBlur = 10;
+
+		if (this.playerTimers.timerRunning) {
+			if (this.playerTimers.currentPlayer == "a") {
+				this.playerAButton = this.pauseBtn;
+				this.playerBButton = this.playBtn;
+			} else {
+				this.playerAButton = this.playBtn;
+				this.playerBButton = this.pauseBtn;
+			}
+		} else {
+			this.playerAButton = this.playBtn;
+			this.playerBButton = this.playBtn;
+		}
 
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.ctx.globalAlpha = this.opacity;
 
 		if (window.visualViewport.width < window.visualViewport.height) {
-			// p1 coords
-			this.playerOneButtonCoords = [
+			// pA coords
+			this.playerAButtonCoords = [
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
@@ -118,8 +205,8 @@ class UICanvasObject {
 				this.iconSize, this.iconSize
 			];
 			
-			// p2 coords
-			this.playerTwoButtonCoords = [
+			// pB coords
+			this.playerBButtonCoords = [
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
@@ -130,12 +217,12 @@ class UICanvasObject {
 				this.iconSize, this.iconSize
 			];
 			
-			// p1 button
+			// pA button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
 
 			this.ctx.drawImage(
-				this.playerOneButton,
+				this.playerAButton,
 				-(this.canvas.width / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					+ this.padding, 
@@ -145,9 +232,9 @@ class UICanvasObject {
 
 			this.ctx.restore();
 
-			// p2 button
+			// pB button
 			this.ctx.drawImage(
-				this.playerTwoButton,
+				this.playerBButton,
 				(this.canvas.width / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
@@ -197,8 +284,8 @@ class UICanvasObject {
 				this.iconSize, this.iconSize
 			];
 		} else {
-			// p1 coords
-			this.playerOneButtonCoords = [
+			// pA coords
+			this.playerAButtonCoords = [
 				(this.iconSize / 2),
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
@@ -206,8 +293,8 @@ class UICanvasObject {
 				this.iconSize, this.iconSize
 			];
 			
-			// p2 coords
-			this.playerTwoButtonCoords = [
+			// pB coords
+			this.playerBButtonCoords = [
 				this.canvas.width - (this.iconSize * 1.5),
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
@@ -215,12 +302,12 @@ class UICanvasObject {
 				this.iconSize, this.iconSize
 			];
 
-			// p1 button
+			// pA button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 			
 			this.ctx.drawImage(
-				this.playerOneButton,
+				this.playerAButton,
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					+ this.padding, 
@@ -230,11 +317,11 @@ class UICanvasObject {
 
 			this.ctx.restore();
 
-			// p2 button
+			// pB button
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * -90);
 			this.ctx.drawImage(
-				this.playerTwoButton,
+				this.playerBButton,
 				-(this.canvas.height / 2)
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- this.iconSize
@@ -314,25 +401,18 @@ class UICanvasObject {
 }
 
 class TimeCanvasObject {
-	constructor() {
+	constructor(playerTimers) {
+		this.playerTimers = playerTimers;
+
 		this.canvas = document.getElementById("timeCanvas");
 		this.ctx = this.canvas.getContext("2d");
 		
 		this.fontReady = document.fonts.check("1em Wellfleet");
 		if (this.fontReady) {
-			const formattedTime = this.formatTime(new Date());
-			this.fontSize = 80;
-			this.ctx.font = this.fontSize + "px Wellfleet";
-			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
-			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
-			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
-			this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
+			this.fontCheck();
 		}
 
 		this.opacity = 1;
-		this.playerOneClockText = "00:00:00";
-		this.playerTwoClockText = "00:00:00";
 
 		this.setCanvasDimensions();
 		this.draw();
@@ -341,6 +421,17 @@ class TimeCanvasObject {
 			this.setCanvasDimensions();
 			this.draw();
 		}, false);
+	}
+
+	formatPlayerTime(date) {
+		let hours = date.getUTCHours();
+		const minutes = date.getUTCMinutes();
+		const seconds = date.getUTCSeconds();
+		const strHours = hours < 10 ? '0' + hours : hours;
+		const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+		const strSeconds = seconds < 10 ? '0' + seconds : seconds;
+
+		return `${strHours}:${strMinutes}:${strSeconds}`;
 	}
 
 	formatTime(date, showSeconds=false) {
@@ -355,7 +446,7 @@ class TimeCanvasObject {
 		const strMinutes = minutes < 10 ? '0' + minutes : minutes;
 		const strSeconds = seconds < 10 ? '0' + seconds : seconds;
 
-		const result = `${strHours}:${strMinutes}`;
+		let result = `${strHours}:${strMinutes}`;
 
 		if (showSeconds) {
 			result = `${strHours}:${strMinutes}:${strSeconds}`;
@@ -364,6 +455,19 @@ class TimeCanvasObject {
 			time: result,
 			ampm: ampm
 		};
+	}
+
+	fontCheck() {
+		const formattedTime = this.formatTime(new Date());
+		this.fontSize = 80;
+		this.ctx.font = this.fontSize + "px Wellfleet";
+		this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
+		this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
+		this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+		this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+		this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
+
+		this.fontReady = document.fonts.check("1em Wellfleet");
 	}
 
 	draw() {
@@ -382,15 +486,11 @@ class TimeCanvasObject {
 		this.ctx.shadowBlur = 5;
 
 		if (!this.fontReady) {
-			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
-			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
-			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
-			this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
-			this.ctx.font = this.fontSize + "px Wellfleet";
-			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
-
-			this.fontReady = document.fonts.check("1em Wellfleet");
+			this.fontCheck();
 		}
+
+		const pATime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("a")));
+		const pBTime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("b")));
 
 		if (window.visualViewport.width < window.visualViewport.height) {
 			// main clock
@@ -412,23 +512,23 @@ class TimeCanvasObject {
 	
 			this.ctx.restore();
 
-			// p1 clock
+			// pA clock
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
 			
 			this.ctx.fillText(
-				this.playerOneClockText,
-				-(this.canvas.width / 2) - (this.ctx.measureText(this.playerOneClockText).width / 2), 
+				pATime,
+				-(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
 	
 			this.ctx.restore();
 
-			// p2 clock
+			// pB clock
 			this.ctx.fillText(
-				this.playerTwoClockText,
-				(this.canvas.width / 2) - (this.ctx.measureText(this.playerTwoClockText).width / 2), 
+				pBTime,
+				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
 				this.canvas.height - (this.playerClockFontSize / 1.5)
 			);
 		} else {
@@ -438,26 +538,26 @@ class TimeCanvasObject {
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 			this.ctx.fillText(formattedTime.ampm, (this.canvas.width / 2) + (this.renderedTextMetrics.width / 2) + 8, 96);
 
-			// p1 clock
+			// pA clock
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 			
 			this.ctx.fillText(
-				this.playerOneClockText,
-				(this.canvas.height / 2) - (this.ctx.measureText(this.playerOneClockText).width / 2), 
+				pATime,
+				(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
 
 			this.ctx.restore();
 
-			// p2 clock
+			// pB clock
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * -90);	
 			
 			this.ctx.fillText(
-				this.playerTwoClockText,
-				-(this.canvas.height / 2) - (this.ctx.measureText(this.playerTwoClockText).width / 2), 
+				pBTime,
+				-(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2), 
 				this.canvas.width - (this.playerClockFontSize / 1.5)
 			);
 			this.ctx.restore();
@@ -467,7 +567,7 @@ class TimeCanvasObject {
 			window.requestAnimationFrame(() => {
 				this.draw();
 			});
-		}, 1000);
+		}, 500);
 	}
 
 	setCanvasDimensions() {
@@ -771,8 +871,10 @@ function setCoinCanvasRotation() {
 	}
 }
 
-const timeDisplay = new TimeCanvasObject();
-const uiDisplay = new UICanvasObject(timeDisplay);
+
+const playerTimers = new PlayerTimers();
+const timeDisplay = new TimeCanvasObject(playerTimers);
+const uiDisplay = new UICanvasObject(timeDisplay, playerTimers);
 const statusDisplay = new StatusCanvasObject();
 
 const scene = new THREE.Scene();
@@ -822,24 +924,9 @@ cylinder.disableClick = false;
 flipCoin(camera, cylinder, false);
 renderer.render(scene, camera);
 
-// document.body.appendChild(renderer.domElement);
+document.body.appendChild(renderer.domElement);
 setCoinCanvasRotation();
 
 window.addEventListener('resize', function () {
 	setCoinCanvasRotation();
 }, false);
-
-// renderer.domElement.addEventListener('click', function(event) {
-// 	if (!cylinder.disableClick) {
-// 		mouse.x = (event.clientX / window.visualViewport.width) * 2 - 1;
-// 		mouse.y = -(event.clientY / window.visualViewport.height) * 2 + 1;
-// 		raycaster.setFromCamera(mouse, camera);
-	
-// 		if (raycaster.intersectObjects(scene.children).length > 0) {
-// 			cylinder.disableClick = true;
-// 			clearTimeout(timeDisplay.fadeInTimeout);
-// 			timeDisplay.fadeOut();
-// 			flipCoin(camera, cylinder, true);
-// 		}
-// 	}
-// });
