@@ -33,6 +33,11 @@
 			z-index: 2;
 			pointer-events: none;
 		}
+		#uiCanvas {
+			position: fixed;
+			z-index: 3;
+			/* pointer-events: none; */
+		}
 	</style>
 
 	<script type="importmap">
@@ -46,6 +51,7 @@
 <body>
 	<canvas id="statusCanvas"></canvas>
 	<canvas id="timeCanvas"></canvas>
+	<canvas id="uiCanvas"></canvas>
 
 	<script type="module" src="assets/main.js"></script>
 </body>

@@ -1,5 +1,318 @@
 import * as THREE from 'three';
 
+class UICanvasObject {
+	constructor(timeDisplay) {
+		this.canvas = document.getElementById("uiCanvas");
+		this.ctx = this.canvas.getContext("2d");
+
+		this.timeDisplay = timeDisplay;
+
+		this.iconSize = 60;
+		this.padding = this.iconSize / 4;
+		this.opacity = 1;
+		
+		this.refreshBtn = new Image(this.iconSize, this.iconSize),
+		this.playBtn = new Image(this.iconSize, this.iconSize),
+		this.pauseBtn = new Image(this.iconSize, this.iconSize),
+		this.fullscreenBtn = new Image(this.iconSize, this.iconSize);
+
+		this.playerOneButton = this.playBtn;
+		this.playerTwoButton = this.playBtn;
+
+		this.playerOneButtonCoords = [0, 0, 0, 0];
+		this.playerTwoButtonCoords = [0, 0, 0, 0];
+		this.fullscreenButtonCoords = [0, 0, 0, 0];
+		this.refreshButtonCoords = [0, 0, 0, 0];
+
+		this.refreshBtn.src = "assets/refresh.png";
+		this.playBtn.src = "assets/play.png";
+		this.pauseBtn.src = "assets/pause.png";
+		this.fullscreenBtn.src = "assets/fullscreen.png";
+
+		this.playBtn.onload = () => {
+			this.draw()
+		};
+		this.fullscreenBtn.onload = () => {
+			this.draw()
+		};
+		this.refreshBtn.onload = () => {
+			this.draw()
+		};
+
+		this.setCanvasDimensions();
+		this.draw();
+
+		window.addEventListener('resize', () => {
+			this.setCanvasDimensions();
+			this.draw();
+		}, false);
+
+		const c = this;
+		this.canvas.addEventListener('click', function(event) {
+			if (c.clickInBox(event.clientX, event.clientY, c.playerOneButtonCoords)) {
+				console.log("clicked p1")
+			}
+			if (c.clickInBox(event.clientX, event.clientY, c.playerTwoButtonCoords)) {
+				console.log("clicked p2")
+			}
+			if (c.clickInBox(event.clientX, event.clientY, c.fullscreenButtonCoords)) {
+				console.log("clicked fullscreen")
+
+				if (!document.fullscreenElement) {
+					document.body.requestFullscreen().catch((err) => {
+						console.log(`Error attempting to enable fullscreen mode: ${err.message} (${err.name})`);
+					});
+				} else {
+					document.exitFullscreen();
+				}
+			}
+			if (c.clickInBox(event.clientX, event.clientY, c.refreshButtonCoords)) {
+				console.log("clicked refresh")
+			}
+
+			// handle click on coin
+			if (!cylinder.disableClick) {
+				mouse.x = (event.clientX / window.visualViewport.width) * 2 - 1;
+				mouse.y = -(event.clientY / window.visualViewport.height) * 2 + 1;
+				raycaster.setFromCamera(mouse, camera);
+			
+				if (raycaster.intersectObjects(scene.children).length > 0) {
+					cylinder.disableClick = true;
+					clearTimeout(timeDisplay.fadeInTimeout);
+					uiDisplay.fadeOut();
+					timeDisplay.fadeOut();
+					flipCoin(camera, cylinder, true);
+				}
+			}
+		});
+	}
+
+	clickInBox(x, y, box) {
+		// console.log(x, y, box);
+		let xMin = box[0],
+			xMax = box[0] + box[2],
+			yMin = box[1],
+			yMax = box[1] + box[3];
+		return (x >= xMin && x <= xMax && y >= yMin && y <= yMax);
+	}
+
+	draw() {
+		if (!this.timeDisplay.fontReady) {
+			setTimeout(() => {
+				this.draw();
+			}, 500);
+		}
+
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.ctx.globalAlpha = this.opacity;
+
+		if (window.visualViewport.width < window.visualViewport.height) {
+			// p1 coords
+			this.playerOneButtonCoords = [
+				(this.canvas.width / 2)
+					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					- (this.iconSize)
+					- this.padding,
+				(this.iconSize)
+					- (this.padding * 2),
+				this.iconSize, this.iconSize
+			];
+			
+			// p2 coords
+			this.playerTwoButtonCoords = [
+				(this.canvas.width / 2)
+					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					- (this.iconSize)
+					- this.padding,
+				(this.canvas.height)
+					- (this.iconSize)
+					- (this.padding * 2),
+				this.iconSize, this.iconSize
+			];
+			
+			// p1 button
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * 180);
+
+			this.ctx.drawImage(
+				this.playerOneButton,
+				-(this.canvas.width / 2)
+					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					+ this.padding, 
+				-(this.iconSize * 1.5),
+				this.iconSize, this.iconSize
+			);
+
+			this.ctx.restore();
+
+			// p2 button
+			this.ctx.drawImage(
+				this.playerTwoButton,
+				(this.canvas.width / 2)
+					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					- (this.iconSize)
+					- this.padding,
+				(this.canvas.height)
+					- (this.iconSize * 1.5),
+				this.iconSize, this.iconSize
+			);
+
+			this.ctx.drawImage(
+				this.fullscreenBtn,
+				this.canvas.width - (this.iconSize * 1.5),
+				(this.canvas.height / 2) - 
+					(this.timeDisplay.renderedTextMetrics.width / 2) -
+					(this.timeDisplay.renderedSubTextMetrics.width) -
+					(this.padding * 2) -
+					this.iconSize,
+				this.iconSize, this.iconSize
+			);
+			this.fullscreenButtonCoords = [
+				this.canvas.width - (this.iconSize * 1.5),
+				(this.canvas.height / 2) - 
+					(this.timeDisplay.renderedTextMetrics.width / 2) -
+					(this.timeDisplay.renderedSubTextMetrics.width) -
+					(this.padding * 2) -
+					this.iconSize,
+				this.iconSize, this.iconSize
+			];
+
+			this.ctx.drawImage(
+				this.refreshBtn,
+				this.canvas.width - (this.iconSize * 1.5),
+				(this.canvas.height / 2) +
+					(this.timeDisplay.renderedTextMetrics.width / 2) +
+					(this.timeDisplay.renderedSubTextMetrics.width) +
+					(this.padding * 2) -
+					this.iconSize,
+				this.iconSize, this.iconSize
+			);
+			this.refreshButtonCoords = [
+				this.canvas.width - (this.iconSize * 1.5),
+				(this.canvas.height / 2) +
+					(this.timeDisplay.renderedTextMetrics.width / 2) +
+					(this.timeDisplay.renderedSubTextMetrics.width) +
+					(this.padding * 2) -
+					this.iconSize,
+				this.iconSize, this.iconSize
+			];
+		} else {
+			// p1 coords
+			this.playerOneButtonCoords = [
+				(this.iconSize / 2),
+				(this.canvas.height / 2)
+					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					+ this.padding,
+				this.iconSize, this.iconSize
+			];
+			
+			// p2 coords
+			this.playerTwoButtonCoords = [
+				this.canvas.width - (this.iconSize * 1.5),
+				(this.canvas.height / 2)
+					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					+ this.padding,
+				this.iconSize, this.iconSize
+			];
+
+			// p1 button
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * 90);
+			
+			this.ctx.drawImage(
+				this.playerOneButton,
+				(this.canvas.height / 2)
+					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					+ this.padding, 
+				-(this.iconSize * 1.5),
+				this.iconSize, this.iconSize
+			);
+
+			this.ctx.restore();
+
+			// p2 button
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * -90);
+			this.ctx.drawImage(
+				this.playerTwoButton,
+				-(this.canvas.height / 2)
+					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
+					- this.iconSize
+					- this.padding, 
+				this.canvas.width - (this.iconSize * 1.5),
+				this.iconSize, this.iconSize
+			);
+
+			this.ctx.restore();
+			
+			this.ctx.drawImage(
+				this.refreshBtn,
+				(this.canvas.width / 2)
+					+ (this.timeDisplay.renderedTextMetrics.width / 2)
+					+ (this.timeDisplay.renderedSubTextMetrics.width)
+					+ (this.padding * 2),
+				(this.iconSize / 2),
+				this.iconSize, this.iconSize
+			);
+			this.refreshButtonCoords = [
+				(this.canvas.width / 2)
+					+ (this.timeDisplay.renderedTextMetrics.width / 2)
+					+ (this.timeDisplay.renderedSubTextMetrics.width)
+					+ (this.padding * 2),
+				(this.iconSize / 2),
+				this.iconSize, this.iconSize
+			];
+
+			this.ctx.drawImage(
+				this.fullscreenBtn,
+				(this.canvas.width / 2)
+					- (this.timeDisplay.renderedTextMetrics.width / 2)
+					- (this.timeDisplay.renderedSubTextMetrics.width)
+					- (this.padding * 2),
+				(this.iconSize / 2),
+				this.iconSize, this.iconSize
+			);
+			this.fullscreenButtonCoords = [
+				(this.canvas.width / 2)
+					- (this.timeDisplay.renderedTextMetrics.width / 2)
+					- (this.timeDisplay.renderedSubTextMetrics.width)
+					- (this.padding * 2),
+				(this.iconSize / 2),
+				this.iconSize, this.iconSize
+			];
+		}
+	}
+
+	setCanvasDimensions() {
+		this.canvas.width = window.visualViewport.width;
+		this.canvas.height = window.visualViewport.height;
+	}
+
+	fadeOut() {
+		this.fadingOut = true;
+		if (this.opacity > 0) {
+			this.opacity -= 0.06;
+			window.requestAnimationFrame(() => {
+				this.fadeOut();
+				this.draw();
+			});
+		} else {
+			this.opacity = 0;
+			this.fadingOut = false;
+		}
+	}
+
+	fadeIn() {
+		if (!this.fadingOut && this.opacity < 1) {
+			this.opacity += 0.025;
+			window.requestAnimationFrame(() => {
+				this.fadeIn();
+				this.draw();
+			});
+		}
+	}
+}
+
 class TimeCanvasObject {
 	constructor() {
 		this.canvas = document.getElementById("timeCanvas");
@@ -13,9 +326,13 @@ class TimeCanvasObject {
 			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+			this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
 		}
 
 		this.opacity = 1;
+		this.playerOneClockText = "00:00:00";
+		this.playerTwoClockText = "00:00:00";
 
 		this.setCanvasDimensions();
 		this.draw();
@@ -26,7 +343,7 @@ class TimeCanvasObject {
 		}, false);
 	}
 
-	formatTime(date) {
+	formatTime(date, showSeconds=false) {
 		let hours = date.getHours();
 		const minutes = date.getMinutes();
 		const seconds = date.getSeconds();
@@ -37,9 +354,14 @@ class TimeCanvasObject {
 		const strHours = hours < 10 ? '0' + hours : hours;
 		const strMinutes = minutes < 10 ? '0' + minutes : minutes;
 		const strSeconds = seconds < 10 ? '0' + seconds : seconds;
-	
-		return {
-			time: `${strHours}:${strMinutes}:${strSeconds}`,
+
+		const result = `${strHours}:${strMinutes}`;
+
+		if (showSeconds) {
+			result = `${strHours}:${strMinutes}:${strSeconds}`;
+		}
+		return {	
+			time: result,
 			ampm: ampm
 		};
 	}
@@ -48,7 +370,9 @@ class TimeCanvasObject {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		const formattedTime = this.formatTime(new Date());
+
 		this.fontSize = 80;
+		this.playerClockFontSize = this.fontSize / 1.5;
 		this.ctx.font = this.fontSize + "px Wellfleet";
 		this.ctx.textAlign = "left";
 		this.ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
@@ -58,14 +382,18 @@ class TimeCanvasObject {
 		this.ctx.shadowBlur = 5;
 
 		if (!this.fontReady) {
-			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 			this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+			this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
 			this.ctx.font = this.fontSize + "px Wellfleet";
+			this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
+
 			this.fontReady = document.fonts.check("1em Wellfleet");
 		}
 
 		if (window.visualViewport.width < window.visualViewport.height) {
+			// main clock
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 
@@ -83,11 +411,56 @@ class TimeCanvasObject {
 			);
 	
 			this.ctx.restore();
+
+			// p1 clock
+			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * 180);
+			
+			this.ctx.fillText(
+				this.playerOneClockText,
+				-(this.canvas.width / 2) - (this.ctx.measureText(this.playerOneClockText).width / 2), 
+				-(this.playerClockFontSize / 1.5)
+			);
+	
+			this.ctx.restore();
+
+			// p2 clock
+			this.ctx.fillText(
+				this.playerTwoClockText,
+				(this.canvas.width / 2) - (this.ctx.measureText(this.playerTwoClockText).width / 2), 
+				this.canvas.height - (this.playerClockFontSize / 1.5)
+			);
 		} else {
+			// main clock
 			this.ctx.fillText(formattedTime.time, (this.canvas.width / 2) - (this.renderedTextMetrics.width / 2), 96);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 			this.ctx.fillText(formattedTime.ampm, (this.canvas.width / 2) + (this.renderedTextMetrics.width / 2) + 8, 96);
+
+			// p1 clock
+			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * 90);
+			
+			this.ctx.fillText(
+				this.playerOneClockText,
+				(this.canvas.height / 2) - (this.ctx.measureText(this.playerOneClockText).width / 2), 
+				-(this.playerClockFontSize / 1.5)
+			);
+
+			this.ctx.restore();
+
+			// p2 clock
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * -90);	
+			
+			this.ctx.fillText(
+				this.playerTwoClockText,
+				-(this.canvas.height / 2) - (this.ctx.measureText(this.playerTwoClockText).width / 2), 
+				this.canvas.width - (this.playerClockFontSize / 1.5)
+			);
+			this.ctx.restore();
 		}
 
 		setTimeout(() => {
@@ -111,6 +484,7 @@ class TimeCanvasObject {
 				this.draw();
 			});
 		} else {
+			this.opacity = 0;
 			this.fadingOut = false;
 		}
 	}
@@ -330,6 +704,11 @@ function animate() {
 			timeDisplay.canFadeIn = true;
 			timeDisplay.fadeIn();
 		}, 3000);
+
+		uiDisplay.fadeInTimeout = setTimeout(() => {
+			uiDisplay.canFadeIn = true;
+			uiDisplay.fadeIn();
+		}, 3000);
 	}
 
 	if (cylinder.flipAnimating) {
@@ -393,6 +772,7 @@ function setCoinCanvasRotation() {
 }
 
 const timeDisplay = new TimeCanvasObject();
+const uiDisplay = new UICanvasObject(timeDisplay);
 const statusDisplay = new StatusCanvasObject();
 
 const scene = new THREE.Scene();
@@ -442,24 +822,24 @@ cylinder.disableClick = false;
 flipCoin(camera, cylinder, false);
 renderer.render(scene, camera);
 
-document.body.appendChild(renderer.domElement);
+// document.body.appendChild(renderer.domElement);
 setCoinCanvasRotation();
 
 window.addEventListener('resize', function () {
 	setCoinCanvasRotation();
 }, false);
 
-renderer.domElement.addEventListener('click', function(event) {
-	if (!cylinder.disableClick) {
-		mouse.x = (event.clientX / window.visualViewport.width) * 2 - 1;
-		mouse.y = -(event.clientY / window.visualViewport.height) * 2 + 1;
-		raycaster.setFromCamera(mouse, camera);
+// renderer.domElement.addEventListener('click', function(event) {
+// 	if (!cylinder.disableClick) {
+// 		mouse.x = (event.clientX / window.visualViewport.width) * 2 - 1;
+// 		mouse.y = -(event.clientY / window.visualViewport.height) * 2 + 1;
+// 		raycaster.setFromCamera(mouse, camera);
 	
-		if (raycaster.intersectObjects(scene.children).length > 0) {
-			cylinder.disableClick = true;
-			clearTimeout(timeDisplay.fadeInTimeout);
-			timeDisplay.fadeOut();
-			flipCoin(camera, cylinder, true);
-		}
-	}
-});
+// 		if (raycaster.intersectObjects(scene.children).length > 0) {
+// 			cylinder.disableClick = true;
+// 			clearTimeout(timeDisplay.fadeInTimeout);
+// 			timeDisplay.fadeOut();
+// 			flipCoin(camera, cylinder, true);
+// 		}
+// 	}
+// });
