@@ -4,22 +4,29 @@ class PlayerTimers {
 	constructor() {
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
+		this.currentTurnTotal = 0;
+		this.lastTurnTime = 0;
 		
 		this.currentPlayer = "a";
 		this.timerRunning = false;
 		this.turnStartTime = false;
 	}
 
+	elapsedTime() {
+		return this.timerRunning ? new Date() - this.turnStartTime : 0;
+	}
+
 	resetTimes() {
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
+		this.currentTurnTotal = 0;
+		this.lastTurnTime = 0;
 		this.timerRunning = false;
 		this.turnStartTime = false;
 	}
 
 	getPlayerTime(player) {
-		let elapsedTime = this.timerRunning ? new Date() - this.turnStartTime : 0;
-		return this.currentPlayer == player ? this.getPlayerTimeTotal(player) + elapsedTime : this.getPlayerTimeTotal(player);
+		return this.currentPlayer == player ? this.getPlayerTimeTotal(player) + this.elapsedTime() : this.getPlayerTimeTotal(player);
 	}
 
 	getPlayerTimeTotal(player) {
@@ -31,14 +38,18 @@ class PlayerTimers {
 		}
 	}
 
+	getCurrentTurnTotal() {
+		return this.currentTurnTotal + this.elapsedTime();
+	}
+
 	setPlayerTimeTotal(player) {
-		let elapsedTime = this.turnStartTime ? new Date() - this.turnStartTime : 0;
+		this.currentTurnTotal += this.elapsedTime();
 		switch (player) {
 			case "a":
-				this.playerATimeTotal += elapsedTime;
+				this.playerATimeTotal += this.elapsedTime();
 				break;
 			case "b":
-				this.playerBTimeTotal += elapsedTime;
+				this.playerBTimeTotal += this.elapsedTime();
 				break;
 		}
 	}
@@ -56,9 +67,11 @@ class PlayerTimers {
 	switchTurn(player) {
 		this.setPlayerTimeTotal(this.currentPlayer);
 
-		if (this.currentPlayer == player && this.timerRunning) {
-			this.pauseTimer();
+		if (this.currentPlayer == player) {
+			this.timerRunning ? this.pauseTimer() : this.startTimer();
 		} else {
+			this.lastTurnTime = this.currentTurnTotal;
+			this.currentTurnTotal = 0;
 			this.currentPlayer = player;
 			this.startTimer();
 		}
@@ -444,13 +457,16 @@ class TimeCanvasObject {
 
 		this.canvas = document.getElementById("timeCanvas");
 		this.ctx = this.canvas.getContext("2d");
+
+		this.opacity = 1;
+		this.fontSize = 80;
+		this.playerClockFontSize = this.fontSize / 1.5;
+		this.playerClockSubTextColor = "180, 180, 180"
 		
 		this.fontReady = document.fonts.check("1em Wellfleet");
 		if (this.fontReady) {
 			this.fontCheck();
 		}
-
-		this.opacity = 1;
 
 		this.setCanvasDimensions();
 		this.draw();
@@ -497,38 +513,39 @@ class TimeCanvasObject {
 
 	fontCheck() {
 		const formattedTime = this.formatTime(new Date());
-		this.fontSize = 80;
 		this.ctx.font = this.fontSize + "px Wellfleet";
 		this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
 		this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 		this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
 		this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
 		this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
+		this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
+		this.renderedPlayerClockSubTextMetrics = this.ctx.measureText("00:00:00");
 
 		this.fontReady = document.fonts.check("1em Wellfleet");
 	}
 
 	draw() {
+		if (!this.fontReady) {
+			this.fontCheck();
+		}
+
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
 		const formattedTime = this.formatTime(new Date());
 
-		this.fontSize = 80;
-		this.playerClockFontSize = this.fontSize / 1.5;
 		this.ctx.font = this.fontSize + "px Wellfleet";
-		this.ctx.textAlign = "left";
 		this.ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+		this.ctx.textAlign = "left";
 		this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.7})`;
 		this.ctx.shadowOffsetX = 4;
 		this.ctx.shadowOffsetY = 4;
 		this.ctx.shadowBlur = 5;
 
-		if (!this.fontReady) {
-			this.fontCheck();
-		}
-
 		const pATime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("a")));
 		const pBTime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("b")));
+		const pLastTurnTime = this.formatPlayerTime(new Date(this.playerTimers.lastTurnTime));
+		const cTurnTime = this.formatPlayerTime(new Date(this.playerTimers.getCurrentTurnTotal()));
 
 		if (window.visualViewport.width < window.visualViewport.height) {
 			// main clock
@@ -555,25 +572,50 @@ class TimeCanvasObject {
 	
 			this.ctx.restore();
 
-			// pA clock
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
+			// pA clock
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
-			
+			// if (!this.playerTimers.currentPlayer == "a") {
+			// 	this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			// };
+
 			this.ctx.fillText(
-				pATime,
+				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
 				-(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
+			);
+			
+			this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.4})`;
+			this.ctx.fillText(
+				pATime,
+				-(this.canvas.width / 2) - (this.renderedPlayerClockSubTextMetrics.width / 2) - (ICON_SIZE / 2), 
+				-(this.playerClockFontSize * 1.75)
 			);
 	
 			this.ctx.restore();
 
 			// pB clock
+			this.ctx.save();
+			// if (!this.playerTimers.currentPlayer == "b") {
+			// 	this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			// };
 			this.ctx.fillText(
-				pBTime,
+				this.playerTimers.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
 				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.height - (this.playerClockFontSize / 1.5)
 			);
+			this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.4})`;
+			this.ctx.fillText(
+				pBTime,
+				(this.canvas.width / 2) - (this.renderedPlayerClockSubTextMetrics.width / 2) + (ICON_SIZE / 2), 
+				this.canvas.height - (this.playerClockFontSize * 1.75)
+			);
+			this.ctx.restore();
 		} else {
 			// main clock
 			this.ctx.fillText(
@@ -600,9 +642,17 @@ class TimeCanvasObject {
 			this.ctx.rotate((Math.PI / 180) * 90);
 			
 			this.ctx.fillText(
-				pATime,
+				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
 				(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
+			);
+			this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.4})`;
+			this.ctx.fillText(
+				pATime,
+				(this.canvas.height / 2) - (this.renderedPlayerClockSubTextMetrics.width / 2) - (ICON_SIZE / 2), 
+				-(this.playerClockFontSize * 1.75)
 			);
 
 			this.ctx.restore();
@@ -612,9 +662,17 @@ class TimeCanvasObject {
 			this.ctx.rotate((Math.PI / 180) * -90);	
 			
 			this.ctx.fillText(
-				pBTime,
+				this.playerTimers.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
 				-(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.width - (this.playerClockFontSize / 1.5)
+			);
+			this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.4})`;
+			this.ctx.fillText(
+				pBTime,
+				-(this.canvas.height / 2) - (this.renderedPlayerClockSubTextMetrics.width / 2) + (ICON_SIZE / 2), 
+				this.canvas.width - (this.playerClockFontSize * 1.75)
 			);
 			this.ctx.restore();
 		}
