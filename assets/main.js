@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 class PlayerData {
 	constructor() {
+		this.matchTimeStart = false;
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
 		this.currentTurnTotal = 0;
@@ -16,25 +17,6 @@ class PlayerData {
 		this.currentPlayer = "a";
 		this.timerRunning = false;
 		this.turnStartTime = false;
-	}
-
-	elapsedTime() {
-		return this.timerRunning ? new Date() - this.turnStartTime : 0;
-	}
-
-	resetSession() {
-		this.playerATimeTotal = 0;
-		this.playerBTimeTotal = 0;
-		this.currentTurnTotal = 0;
-		this.lastTurnTime = 0;
-		this.timerRunning = false;
-		this.turnStartTime = false;
-
-		this.flips = {
-			heads: 0,
-			tails: 0,
-			history: []
-		}
 	}
 
 	getPlayerTime(player) {
@@ -54,6 +36,10 @@ class PlayerData {
 		return this.currentTurnTotal + this.elapsedTime();
 	}
 
+	getMatchTimeTotal() {
+		return this.matchTimeStart ? (new Date() - this.matchTimeStart) : 0;
+	}
+
 	setPlayerTimeTotal(player) {
 		this.currentTurnTotal += this.elapsedTime();
 		switch (player) {
@@ -66,7 +52,14 @@ class PlayerData {
 		}
 	}
 
+	elapsedTime() {
+		return this.timerRunning ? new Date() - this.turnStartTime : 0;
+	}
+
 	startTimer() {
+		if (!this.matchTimeStart) {
+			this.matchTimeStart = new Date();
+		}
 		this.timerRunning = true;
 		this.turnStartTime = new Date();
 	}
@@ -86,6 +79,22 @@ class PlayerData {
 			this.currentTurnTotal = 0;
 			this.currentPlayer = player;
 			this.startTimer();
+		}
+	}
+
+	resetSession() {
+		this.matchTimeStart = false;
+		this.playerATimeTotal = 0;
+		this.playerBTimeTotal = 0;
+		this.currentTurnTotal = 0;
+		this.lastTurnTime = 0;
+		this.timerRunning = false;
+		this.turnStartTime = false;
+
+		this.flips = {
+			heads: 0,
+			tails: 0,
+			history: []
 		}
 	}
 }
@@ -588,6 +597,7 @@ class TimeCanvasObject {
 	}
 
 	formatPlayerTime(date) {
+		date = new Date(date);
 		const hours = date.getUTCHours();
 		const minutes = date.getUTCMinutes();
 		const seconds = date.getUTCSeconds();
@@ -627,6 +637,7 @@ class TimeCanvasObject {
 		this.renderedTextMetrics = this.ctx.measureText(formattedTime.time);
 		this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
 		this.renderedSubTextMetrics = this.ctx.measureText(formattedTime.ampm);
+		this.renderedMatchTimeTextMetrics = this.ctx.measureText("00:00:00");
 		this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
 		this.renderedPlayerClockTextMetrics = this.ctx.measureText("00:00:00");
 		this.ctx.font = (this.fontSize / 2.25) + "px Wellfleet";
@@ -670,10 +681,11 @@ class TimeCanvasObject {
 		this.ctx.shadowOffsetY = 4;
 		this.ctx.shadowBlur = 5;
 
-		const pATime = this.formatPlayerTime(new Date(this.playerData.getPlayerTime("a")));
-		const pBTime = this.formatPlayerTime(new Date(this.playerData.getPlayerTime("b")));
-		const pLastTurnTime = this.formatPlayerTime(new Date(this.playerData.lastTurnTime));
-		const cTurnTime = this.formatPlayerTime(new Date(this.playerData.getCurrentTurnTotal()));
+		const pATime = this.formatPlayerTime(this.playerData.getPlayerTime("a"));
+		const pBTime = this.formatPlayerTime(this.playerData.getPlayerTime("b"));
+		const pLastTurnTime = this.formatPlayerTime(this.playerData.lastTurnTime);
+		const cMatchTime = this.formatPlayerTime(this.playerData.getMatchTimeTotal());
+		const cTurnTime = this.formatPlayerTime(this.playerData.getCurrentTurnTotal());
 
 		if (window.visualViewport.width < window.visualViewport.height) {
 			// main clock
@@ -696,6 +708,13 @@ class TimeCanvasObject {
 					+ (this.renderedTextMetrics.width / 2)
 					- (this.renderedSubTextMetrics.width / 2),
 				-(this.canvas.width) + 96
+			);
+
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.fillText(
+				cMatchTime,
+				(this.canvas.height / 2) - (this.renderedMatchTimeTextMetrics.width / 2),
+				-(this.canvas.width) + (96 * 1.6)
 			);
 	
 			this.ctx.restore();
@@ -751,6 +770,7 @@ class TimeCanvasObject {
 			this.ctx.restore();
 		} else {
 			// main clock
+			this.ctx.save();
 			this.ctx.fillText(
 				formattedTime.time,
 				(this.canvas.width / 2)
@@ -768,6 +788,14 @@ class TimeCanvasObject {
 					- (this.renderedSubTextMetrics.width / 2), 
 				96
 			);
+
+			this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
+			this.ctx.fillText(
+				cMatchTime,
+				(this.canvas.width / 2) - (this.renderedMatchTimeTextMetrics.width / 2),
+				96 * 1.6
+			);
+			this.ctx.restore();
 
 			// pA clock
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
