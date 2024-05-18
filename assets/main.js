@@ -153,10 +153,12 @@ class UICanvasObject {
 			if (c.clickInBox(event.clientX, event.clientY, c.playerAButtonCoords)) {
 				playerData.switchTurn("a");
 				c.draw();
+				navigator.vibrate(300);
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.playerBButtonCoords)) {
 				playerData.switchTurn("b");
 				c.draw();
+				navigator.vibrate(300);
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.fullscreenButtonCoords)) {
 				if (!document.fullscreenElement) {
@@ -170,6 +172,7 @@ class UICanvasObject {
 			if (c.clickInBox(event.clientX, event.clientY, c.refreshButtonCoords)) {
 				playerData.resetSession();
 				c.draw();
+				navigator.vibrate(300);
 			}
 
 			// handle click on coin
@@ -1013,6 +1016,8 @@ function flipCoin(camera, cylinder, doAnimation) {
 			cylinder.result = "Tails!";
 			cylinder.rotation.z = Math.PI;
 		}
+
+		navigator.vibrate(300);
 		animate();
 
 		return cylinder.result;
@@ -1079,6 +1084,7 @@ function animate() {
 		requestAnimationFrame(animate);
 		renderer.render(scene, camera);
 	} else {
+		navigator.vibrate(300);
 		renderer.render(scene, camera);
 
 		setTimeout(zoomCamera, 500);
