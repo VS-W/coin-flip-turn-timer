@@ -985,11 +985,12 @@ function setTextures() {
 }
 
 function flipCoin(camera, cylinder, doAnimation) {
+	camera.position.x = 0;
 	camera.position.y = 0;
-	camera.position.z = 6;
+	camera.position.z =
+		camera.position.initialZ = 5;
 	cylinder.rotation.x = BASE_ROTATION;
 	cylinder.rotation.y = Math.PI / 2;
-	
 	cylinder.rotation.z = 0;
 	
 	cylinder.flipAnimating = true;
@@ -1054,7 +1055,7 @@ function zoomCamera() {
 			if (cylinder.rotation.x.toFixed(1) != BASE_ROTATION.toFixed(1)) {
 				cylinder.rotation.x -= 0.025;
 			}
-			if (camera.position.z.toFixed(1) != (6).toFixed(1)) {
+			if (camera.position.z.toFixed(1) != (camera.position.initialZ).toFixed(1)) {
 				camera.position.z += 0.1;
 			}
 			if (cylinder.rotation.y.toFixed(2) > (Math.PI / 2).toFixed(2)) {
@@ -1064,7 +1065,7 @@ function zoomCamera() {
 			}
 	
 			if (cylinder.rotation.x.toFixed(1) == BASE_ROTATION.toFixed(1)
-				&& camera.position.z.toFixed(1) == (6).toFixed(1)
+				&& camera.position.z.toFixed(1) == (camera.position.initialZ).toFixed(1)
 				&& cylinder.rotation.y.toFixed(1) == (Math.PI / 2).toFixed(1)) {
 				cylinder.zoomFinished = true;
 			}
@@ -1098,16 +1099,16 @@ function animate() {
 
 	if (cylinder.flipAnimating) {
 		if (camera.position.y > -4) {
-			cylinder.rotations += 1;
 			cylinder.rotation.x += BASE_ROTATION;
 			if (cylinder.rotation.x > BASE_ROTATION * 8) {
 				cylinder.rotation.x = BASE_ROTATION;
 			}
-
 			cylinder.rotation.z += 0.003;
 
 			camera.position.y -= 0.07;
 			camera.position.z -= 0.07;
+
+			cylinder.rotations += 1;
 		} else {
 			cylinder.flipAnimating = false;
 			cylinder.rotation.x = -((BASE_ROTATION * (cylinder.rotations - 2)) / 4);
@@ -1115,10 +1116,11 @@ function animate() {
 	} else {
 		if (camera.position.y < 0) {
 			cylinder.rotation.x += BASE_ROTATION / 4;
-
 			cylinder.rotation.z -= 0.003;
+
 			camera.position.y += 0.07;
 			camera.position.z += 0.07;
+
 			cylinder.rotations += 1;
 		} else {
 			if (cylinder.rotation.x.toFixed(1) != BASE_ROTATION.toFixed(1)) {
