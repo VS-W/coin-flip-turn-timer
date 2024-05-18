@@ -4,7 +4,7 @@ A simple turn timer with a coin flip function, designed to be used on a device p
 
 Tap on the green button or the time display to start the timer for that player. Tapping on the opposing button/time display will switch to tracking that player's time. When the timer is active, the current player's button will change a red pause button enabling that player to pause their timer. Fullscreen button (purple) to the left of the center clock, reset button (orange) to the right of the center clock.
 
-The background glow on the active player's side will change colors after their turn has exceeded 2 minutes.
+The background glow on the active player's side will change colors after their turn has exceeded 3 minutes.
 
 ![](assets/flip_sample_1.png)
 

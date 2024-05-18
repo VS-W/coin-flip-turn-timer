@@ -153,12 +153,12 @@ class UICanvasObject {
 			if (c.clickInBox(event.clientX, event.clientY, c.playerAButtonCoords)) {
 				playerData.switchTurn("a");
 				c.draw();
-				navigator.vibrate(300);
+				navigator.vibrate(100);
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.playerBButtonCoords)) {
 				playerData.switchTurn("b");
 				c.draw();
-				navigator.vibrate(300);
+				navigator.vibrate(100);
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.fullscreenButtonCoords)) {
 				if (!document.fullscreenElement) {
@@ -172,7 +172,7 @@ class UICanvasObject {
 			if (c.clickInBox(event.clientX, event.clientY, c.refreshButtonCoords)) {
 				playerData.resetSession();
 				c.draw();
-				navigator.vibrate(300);
+				navigator.vibrate(500);
 			}
 
 			// handle click on coin
@@ -578,6 +578,7 @@ class TimeCanvasObject {
 		this.playerClockFontSize = this.fontSize / 1.5;
 		this.playerClockSubTextColor = "180, 180, 180";
 		this.glowLoop = 0;
+		this.triggeredVibrate = false;
 		
 		this.fontReady = document.fonts.check("1em Wellfleet");
 		if (this.fontReady) {
@@ -651,13 +652,17 @@ class TimeCanvasObject {
 
 	drawBackground(shadowOffsetX, shadowOffsetY, shadowBlur, fillRect) {
 		this.ctx.save();
-
-		if (this.playerData.getCurrentTurnTotal() > 120000) {
+		if (this.playerData.getCurrentTurnTotal() > 180000) {
+			if (!this.triggeredVibrate) {
+				this.triggeredVibrate = true;
+				navigator.vibrate([100, 100, 100, 100, 100]);
+			}
 			this.glowLoop += this.glowLoop < 255 ? 4 : 0;
 			this.ctx.shadowColor = `rgba(${this.glowLoop}, ${255 - this.glowLoop}, 255, ${this.opacity})`;
 		} else {
 			this.ctx.shadowColor = `rgba(0, 255, 255, ${this.opacity})`;
 			this.glowLoop = 0;
+			this.triggeredVibrate = false;
 		}
 
 		this.ctx.shadowOffsetX = shadowOffsetX;
@@ -1017,7 +1022,7 @@ function flipCoin(camera, cylinder, doAnimation) {
 			cylinder.rotation.z = Math.PI;
 		}
 
-		navigator.vibrate(300);
+		navigator.vibrate(200);
 		animate();
 
 		return cylinder.result;
