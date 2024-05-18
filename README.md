@@ -10,7 +10,8 @@ Tap on the green button or the time display to start the timer for that player. 
 
 ## TODO:
 - Total match time.
-- Add a history coin flips, plus total count of each outcome.
+- Add display for the history of coin flips during the current session.
 - Adapt font size for really small screens.
 - Confirmation on reset.
 - Write to localstorage to survive page refresh.
+- Customizable colors, images, turn timeouts/indicators (e.g. elapsed time to change color).

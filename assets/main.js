@@ -1,11 +1,17 @@
 import * as THREE from 'three';
 
-class PlayerTimers {
+class PlayerData {
 	constructor() {
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
 		this.currentTurnTotal = 0;
 		this.lastTurnTime = 0;
+
+		this.flips = {
+			heads: 0,
+			tails: 0,
+			history: []
+		}
 		
 		this.currentPlayer = "a";
 		this.timerRunning = false;
@@ -16,13 +22,19 @@ class PlayerTimers {
 		return this.timerRunning ? new Date() - this.turnStartTime : 0;
 	}
 
-	resetTimes() {
+	resetSession() {
 		this.playerATimeTotal = 0;
 		this.playerBTimeTotal = 0;
 		this.currentTurnTotal = 0;
 		this.lastTurnTime = 0;
 		this.timerRunning = false;
 		this.turnStartTime = false;
+
+		this.flips = {
+			heads: 0,
+			tails: 0,
+			history: []
+		}
 	}
 
 	getPlayerTime(player) {
@@ -79,8 +91,8 @@ class PlayerTimers {
 }
 
 class UICanvasObject {
-	constructor(timeDisplay, playerTimers) {
-		this.playerTimers = playerTimers;
+	constructor(timeDisplay, playerData) {
+		this.playerData = playerData;
 
 		this.canvas = document.getElementById("uiCanvas");
 		this.ctx = this.canvas.getContext("2d");
@@ -130,11 +142,11 @@ class UICanvasObject {
 		const c = this;
 		this.canvas.addEventListener('click', function(event) {
 			if (c.clickInBox(event.clientX, event.clientY, c.playerAButtonCoords)) {
-				playerTimers.switchTurn("a");
+				playerData.switchTurn("a");
 				c.draw();
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.playerBButtonCoords)) {
-				playerTimers.switchTurn("b");
+				playerData.switchTurn("b");
 				c.draw();
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.fullscreenButtonCoords)) {
@@ -147,7 +159,7 @@ class UICanvasObject {
 				}
 			}
 			if (c.clickInBox(event.clientX, event.clientY, c.refreshButtonCoords)) {
-				playerTimers.resetTimes();
+				playerData.resetSession();
 				c.draw();
 			}
 
@@ -163,8 +175,27 @@ class UICanvasObject {
 					clearTimeout(uiDisplay.fadeInTimeout);
 					uiDisplay.fadeOut();
 					timeDisplay.fadeOut();
-					flipCoin(camera, cylinder, true);
-				}
+					switch (flipCoin(camera, cylinder, true)) {
+						case "Heads!":
+							setTimeout(() => {
+								c.playerData.flips.heads++;
+								if (c.playerData.flips.history.length > 4) {
+									c.playerData.flips.history.shift();
+								}
+								c.playerData.flips.history.push("H");
+							}, 2000);
+							break;
+						case "Tails!":
+							setTimeout(() => {
+								c.playerData.flips.tails++;
+								if (c.playerData.flips.history.length > 4) {
+									c.playerData.flips.history.shift();
+								}
+								c.playerData.flips.history.push("T");
+							}, 2000);
+							break;
+						}
+					}
 			}
 		});
 	}
@@ -206,8 +237,8 @@ class UICanvasObject {
 		this.ctx.shadowOffsetY = 0;
 		this.ctx.shadowBlur = 10;
 
-		if (this.playerTimers.timerRunning) {
-			if (this.playerTimers.currentPlayer == "a") {
+		if (this.playerData.timerRunning) {
+			if (this.playerData.currentPlayer == "a") {
 				this.playerAButton = this.pauseBtn;
 				this.playerBButton = this.playBtn;
 			} else {
@@ -222,12 +253,9 @@ class UICanvasObject {
 		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.ctx.globalAlpha = this.opacity;
 
-		let buttonSizeModifier = 0;
+		let buttonSizeModifier = this.timeDisplay.renderedPlayerClockTextMetrics.width + this.padding;
 
 		if (window.visualViewport.width < window.visualViewport.height) {
-			if (TAP_TIME_ENABLED) {
-				buttonSizeModifier = this.timeDisplay.renderedPlayerClockTextMetrics.width + this.padding;
-			}
 			// pA coords
 			this.playerAButtonCoords = [
 				(this.canvas.width / 2)
@@ -318,10 +346,46 @@ class UICanvasObject {
 				...this.refreshButtonCoords
 			);
 			this.ctx.restore();
+
+			this.ctx.save();
+			this.ctx.rotate((Math.PI / 180) * 90);
+			this.ctx.font = (this.iconSize / 2.5) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+			this.ctx.textAlign = "left";
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.7})`;
+			this.ctx.shadowOffsetX = 4;
+			this.ctx.shadowOffsetY = 4;
+			this.ctx.shadowBlur = 5;
+			const
+				textH = "Heads: ",
+				textT = "Tails: ",
+				textHMetrics = this.ctx.measureText(textH),
+				textTMetrics = this.ctx.measureText(textT);
+			
+			this.ctx.fillText(
+				this.playerData.flips.heads,
+				(this.canvas.height / 2) + (textHMetrics.width / 2),
+				-(this.iconSize)
+			);
+		
+			this.ctx.fillText(
+				this.playerData.flips.tails,
+				(this.canvas.height / 2) + (textHMetrics.width / 2),
+				-(this.iconSize / 2.5)
+			);
+			
+			this.ctx.fillText(
+				textH,
+				(this.canvas.height / 2) - (textHMetrics.width / 2),
+				-(this.iconSize)
+			);
+			this.ctx.fillText(
+				textT,
+				(this.canvas.height / 2) - textTMetrics.width + (textHMetrics.width / 2),
+				-(this.iconSize / 2.5)
+			);
+			this.ctx.restore();
 		} else {
-			if (TAP_TIME_ENABLED) {
-				buttonSizeModifier = this.timeDisplay.renderedPlayerClockTextMetrics.width + this.padding;
-			}
 			// pA coords
 			this.playerAButtonCoords = [
 				0,
@@ -411,6 +475,44 @@ class UICanvasObject {
 				...this.fullscreenButtonCoords
 			);
 			this.ctx.restore();
+
+			this.ctx.save();
+			this.ctx.font = (this.iconSize / 2.5) + "px Wellfleet";
+			this.ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+			this.ctx.textAlign = "left";
+			this.ctx.shadowColor = `rgba(0, 0, 0, ${this.opacity * 0.7})`;
+			this.ctx.shadowOffsetX = 4;
+			this.ctx.shadowOffsetY = 4;
+			this.ctx.shadowBlur = 5;
+			const
+				textH = "Heads: ",
+				textT = "Tails: ",
+				textHMetrics = this.ctx.measureText(textH),
+				textTMetrics = this.ctx.measureText(textT);
+			
+			this.ctx.fillText(
+				this.playerData.flips.heads,
+				(this.canvas.width / 2) + (textHMetrics.width / 2),
+				this.canvas.height - (this.iconSize)
+			);
+		
+			this.ctx.fillText(
+				this.playerData.flips.tails,
+				(this.canvas.width / 2) + (textHMetrics.width / 2),
+				this.canvas.height - (this.iconSize / 2.5)
+			);
+			
+			this.ctx.fillText(
+				textH,
+				(this.canvas.width / 2) - (textHMetrics.width / 2),
+				this.canvas.height - (this.iconSize)
+			);
+			this.ctx.fillText(
+				textT,
+				(this.canvas.width / 2) - textTMetrics.width + (textHMetrics.width / 2),
+				this.canvas.height - (this.iconSize / 2.5)
+			);
+			this.ctx.restore();
 		}
 
 		// this.ctx.fillRect(...this.playerAButtonCoords);
@@ -441,6 +543,9 @@ class UICanvasObject {
 	fadeIn() {
 		if (!this.fadingOut && this.opacity < 1) {
 			this.opacity += 0.025;
+			if (this.opacity > 1) {
+				this.opacity = 1;
+			}
 			window.requestAnimationFrame(() => {
 				this.fadeIn();
 				this.draw();
@@ -450,8 +555,8 @@ class UICanvasObject {
 }
 
 class TimeCanvasObject {
-	constructor(playerTimers) {
-		this.playerTimers = playerTimers;
+	constructor(playerData) {
+		this.playerData = playerData;
 
 		this.canvas = document.getElementById("timeCanvas");
 		this.ctx = this.canvas.getContext("2d");
@@ -533,7 +638,7 @@ class TimeCanvasObject {
 	drawBackground(shadowOffsetX, shadowOffsetY, shadowBlur, fillRect) {
 		this.ctx.save();
 
-		if (this.playerTimers.getCurrentTurnTotal() > 120000) {
+		if (this.playerData.getCurrentTurnTotal() > 120000) {
 			this.glowLoop += this.glowLoop < 255 ? 4 : 0;
 			this.ctx.shadowColor = `rgba(${this.glowLoop}, ${255 - this.glowLoop}, 255, ${this.opacity})`;
 		} else {
@@ -565,10 +670,10 @@ class TimeCanvasObject {
 		this.ctx.shadowOffsetY = 4;
 		this.ctx.shadowBlur = 5;
 
-		const pATime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("a")));
-		const pBTime = this.formatPlayerTime(new Date(this.playerTimers.getPlayerTime("b")));
-		const pLastTurnTime = this.formatPlayerTime(new Date(this.playerTimers.lastTurnTime));
-		const cTurnTime = this.formatPlayerTime(new Date(this.playerTimers.getCurrentTurnTotal()));
+		const pATime = this.formatPlayerTime(new Date(this.playerData.getPlayerTime("a")));
+		const pBTime = this.formatPlayerTime(new Date(this.playerData.getPlayerTime("b")));
+		const pLastTurnTime = this.formatPlayerTime(new Date(this.playerData.lastTurnTime));
+		const cTurnTime = this.formatPlayerTime(new Date(this.playerData.getCurrentTurnTotal()));
 
 		if (window.visualViewport.width < window.visualViewport.height) {
 			// main clock
@@ -600,14 +705,14 @@ class TimeCanvasObject {
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
 
-			if (this.playerTimers.currentPlayer == "a") {
+			if (this.playerData.currentPlayer == "a") {
 				this.drawBackground(0, 100, this.canvas.height, [-(this.canvas.width), 0, this.canvas.width, 100]);
 			} else {
 				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
 			}
 
 			this.ctx.fillText(
-				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
+				this.playerData.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
 				-(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
@@ -625,13 +730,13 @@ class TimeCanvasObject {
 
 			// pB clock
 			this.ctx.save();
-			if (this.playerTimers.currentPlayer == "b") {
+			if (this.playerData.currentPlayer == "b") {
 				this.drawBackground(0, -100, this.canvas.height, [0, this.canvas.height, this.canvas.width, 100]);
 			} else {
 				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
 			}
 			this.ctx.fillText(
-				this.playerTimers.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
+				this.playerData.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
 				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.height - (this.playerClockFontSize / 1.5)
 			);
@@ -669,14 +774,14 @@ class TimeCanvasObject {
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
 
-			if (this.playerTimers.currentPlayer == "a") {
+			if (this.playerData.currentPlayer == "a") {
 				this.drawBackground(100, 0, this.canvas.width, [0, 0, this.canvas.height, 100]);
 			} else {
 				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
 			}
 			
 			this.ctx.fillText(
-				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
+				this.playerData.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
 				(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) - (ICON_SIZE / 2), 
 				-(this.playerClockFontSize / 1.5)
 			);
@@ -693,7 +798,7 @@ class TimeCanvasObject {
 
 			// pB clock
 			this.ctx.save();
-			if (this.playerTimers.currentPlayer == "b") {
+			if (this.playerData.currentPlayer == "b") {
 				this.drawBackground(-100, 0, this.canvas.width, [this.canvas.width, 0, 100, this.canvas.height]);
 			} else {
 				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
@@ -701,7 +806,7 @@ class TimeCanvasObject {
 			this.ctx.rotate((Math.PI / 180) * -90);	
 			
 			this.ctx.fillText(
-				this.playerTimers.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
+				this.playerData.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
 				-(this.canvas.height / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
 				this.canvas.width - (this.playerClockFontSize / 1.5)
 			);
@@ -739,6 +844,9 @@ class TimeCanvasObject {
 	fadeIn() {
 		if (!this.fadingOut && this.opacity < 1) {
 			this.opacity += 0.025;
+			if (this.opacity > 1) {
+				this.opacity = 1;
+			}
 			window.requestAnimationFrame(() => {
 				this.fadeIn();
 				this.draw();
@@ -877,6 +985,8 @@ function flipCoin(camera, cylinder, doAnimation) {
 			cylinder.rotation.z = Math.PI;
 		}
 		animate();
+
+		return cylinder.result;
 	}
 }
 
@@ -1019,10 +1129,9 @@ function setCoinCanvasRotation() {
 }
 
 const ICON_SIZE = 60;
-const TAP_TIME_ENABLED = true;
-const playerTimers = new PlayerTimers();
-const timeDisplay = new TimeCanvasObject(playerTimers);
-const uiDisplay = new UICanvasObject(timeDisplay, playerTimers);
+const playerData = new PlayerData();
+const timeDisplay = new TimeCanvasObject(playerData);
+const uiDisplay = new UICanvasObject(timeDisplay, playerData);
 const statusDisplay = new StatusCanvasObject();
 
 const scene = new THREE.Scene();
