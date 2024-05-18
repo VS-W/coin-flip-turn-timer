@@ -1,4 +1,4 @@
-# [Turn Timer + Coin Flip](https://vs-w.github.io/coin-flip-turn-timer/)
+# [Turn Timer + Coin Flip](https://flip.pana.moe/)
 
 A simple turn timer with a coin flip function, designed to be used on a device placed between the players. Tracks the current time taken by the player on their turn and the total time taken by a player across the current session. 
 
