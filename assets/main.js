@@ -459,7 +459,8 @@ class TimeCanvasObject {
 		this.opacity = 1;
 		this.fontSize = 80;
 		this.playerClockFontSize = this.fontSize / 1.5;
-		this.playerClockSubTextColor = "180, 180, 180"
+		this.playerClockSubTextColor = "180, 180, 180";
+		this.glowLoop = 0;
 		
 		this.fontReady = document.fonts.check("1em Wellfleet");
 		if (this.fontReady) {
@@ -473,7 +474,7 @@ class TimeCanvasObject {
 			window.requestAnimationFrame(() => {
 				this.draw();
 			});
-		}, 200);
+		}, 100);
 
 		window.addEventListener('resize', () => {
 			this.setCanvasDimensions();
@@ -531,7 +532,15 @@ class TimeCanvasObject {
 
 	drawBackground(shadowOffsetX, shadowOffsetY, shadowBlur, fillRect) {
 		this.ctx.save();
-		this.ctx.shadowColor = `rgba(0, 230, 255, ${this.opacity})`;
+
+		if (this.playerTimers.getCurrentTurnTotal() > 120000) {
+			this.glowLoop += this.glowLoop < 255 ? 4 : 0;
+			this.ctx.shadowColor = `rgba(${this.glowLoop}, ${255 - this.glowLoop}, 255, ${this.opacity})`;
+		} else {
+			this.ctx.shadowColor = `rgba(0, 255, 255, ${this.opacity})`;
+			this.glowLoop = 0;
+		}
+
 		this.ctx.shadowOffsetX = shadowOffsetX;
 		this.ctx.shadowOffsetY = shadowOffsetY;
 		this.ctx.shadowBlur = shadowBlur;
@@ -572,7 +581,7 @@ class TimeCanvasObject {
 					- (this.renderedTextMetrics.width / 2)
 					- (this.renderedSubTextMetrics.width / 2)
 					- 8, 
-				(-1 * this.canvas.width) + 96
+				-(this.canvas.width) + 96
 			);
 
 			this.ctx.font = (this.fontSize / 2) + "px Wellfleet";
@@ -581,7 +590,7 @@ class TimeCanvasObject {
 				(this.canvas.height / 2)
 					+ (this.renderedTextMetrics.width / 2)
 					- (this.renderedSubTextMetrics.width / 2),
-				(-1 * this.canvas.width) + 96
+				-(this.canvas.width) + 96
 			);
 	
 			this.ctx.restore();
@@ -787,7 +796,7 @@ class StatusCanvasObject {
 	
 				this.ctx.fillText(this.text,
 					(this.canvas.height / 2), 
-					(-1 * this.canvas.width) + this.position
+					-(this.canvas.width) + this.position
 				);
 
 				this.ctx.restore();
