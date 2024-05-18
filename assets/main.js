@@ -234,10 +234,9 @@ class UICanvasObject {
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
 					- this.padding
-					+ (ICON_SIZE / 2),
-				(this.iconSize)
-					- (this.padding * 2),
-				this.iconSize + buttonSizeModifier, this.iconSize
+					+ (this.iconSize / 2),
+				0,
+				this.iconSize + buttonSizeModifier, this.iconSize * 2.25
 			];
 			
 			// pB coords
@@ -246,11 +245,10 @@ class UICanvasObject {
 					- (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					- (this.iconSize)
 					- this.padding
-					+ (ICON_SIZE / 2),
+					+ (this.iconSize / 2),
 				(this.canvas.height)
-					- (this.iconSize)
-					- (this.padding * 2),
-				this.iconSize + buttonSizeModifier, this.iconSize
+					- (this.iconSize * 2.25),
+				this.iconSize + buttonSizeModifier, this.iconSize * 2.25
 			];
 			
 			// pA button
@@ -326,24 +324,24 @@ class UICanvasObject {
 			}
 			// pA coords
 			this.playerAButtonCoords = [
-				(this.iconSize / 2),
+				0,
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					+ this.padding
-					- (ICON_SIZE / 2)
+					- (this.iconSize / 2)
 					- buttonSizeModifier,
-				this.iconSize, this.iconSize + buttonSizeModifier
+				this.iconSize * 2.25, this.iconSize + buttonSizeModifier
 			];
 			
 			// pB coords
 			this.playerBButtonCoords = [
-				this.canvas.width - (this.iconSize * 1.5),
+				this.canvas.width - (this.iconSize * 2.25),
 				(this.canvas.height / 2)
 					+ (this.timeDisplay.renderedPlayerClockTextMetrics.width / 2)
 					+ this.padding
 					- (ICON_SIZE / 2)
 					- buttonSizeModifier,
-				this.iconSize, this.iconSize + buttonSizeModifier
+				this.iconSize * 2.25, this.iconSize + buttonSizeModifier
 			];
 
 			// pA button
@@ -471,6 +469,12 @@ class TimeCanvasObject {
 		this.setCanvasDimensions();
 		this.draw();
 
+		setInterval(() => {
+			window.requestAnimationFrame(() => {
+				this.draw();
+			});
+		}, 200);
+
 		window.addEventListener('resize', () => {
 			this.setCanvasDimensions();
 			this.draw();
@@ -478,7 +482,7 @@ class TimeCanvasObject {
 	}
 
 	formatPlayerTime(date) {
-		let hours = date.getUTCHours();
+		const hours = date.getUTCHours();
 		const minutes = date.getUTCMinutes();
 		const seconds = date.getUTCSeconds();
 		const strHours = hours < 10 ? '0' + hours : hours;
@@ -523,6 +527,16 @@ class TimeCanvasObject {
 		this.renderedPlayerClockSubTextMetrics = this.ctx.measureText("00:00:00");
 
 		this.fontReady = document.fonts.check("1em Wellfleet");
+	}
+
+	drawBackground(shadowOffsetX, shadowOffsetY, shadowBlur, fillRect) {
+		this.ctx.save();
+		this.ctx.shadowColor = `rgba(0, 230, 255, ${this.opacity})`;
+		this.ctx.shadowOffsetX = shadowOffsetX;
+		this.ctx.shadowOffsetY = shadowOffsetY;
+		this.ctx.shadowBlur = shadowBlur;
+		this.ctx.fillRect(...fillRect);
+		this.ctx.restore();
 	}
 
 	draw() {
@@ -576,9 +590,12 @@ class TimeCanvasObject {
 			// pA clock
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 180);
-			// if (!this.playerTimers.currentPlayer == "a") {
-			// 	this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
-			// };
+
+			if (this.playerTimers.currentPlayer == "a") {
+				this.drawBackground(0, 100, this.canvas.height, [-(this.canvas.width), 0, this.canvas.width, 100]);
+			} else {
+				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
+			}
 
 			this.ctx.fillText(
 				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
@@ -599,9 +616,11 @@ class TimeCanvasObject {
 
 			// pB clock
 			this.ctx.save();
-			// if (!this.playerTimers.currentPlayer == "b") {
-			// 	this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity})`;
-			// };
+			if (this.playerTimers.currentPlayer == "b") {
+				this.drawBackground(0, -100, this.canvas.height, [0, this.canvas.height, this.canvas.width, 100]);
+			} else {
+				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
+			}
 			this.ctx.fillText(
 				this.playerTimers.currentPlayer == "b" ? cTurnTime : pLastTurnTime,
 				(this.canvas.width / 2) - (this.renderedPlayerClockTextMetrics.width / 2) + (ICON_SIZE / 2), 
@@ -640,6 +659,12 @@ class TimeCanvasObject {
 			this.ctx.font = (this.playerClockFontSize) + "px Wellfleet";
 			this.ctx.save();
 			this.ctx.rotate((Math.PI / 180) * 90);
+
+			if (this.playerTimers.currentPlayer == "a") {
+				this.drawBackground(100, 0, this.canvas.width, [0, 0, this.canvas.height, 100]);
+			} else {
+				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
+			}
 			
 			this.ctx.fillText(
 				this.playerTimers.currentPlayer == "a" ? cTurnTime : pLastTurnTime,
@@ -659,6 +684,11 @@ class TimeCanvasObject {
 
 			// pB clock
 			this.ctx.save();
+			if (this.playerTimers.currentPlayer == "b") {
+				this.drawBackground(-100, 0, this.canvas.width, [this.canvas.width, 0, 100, this.canvas.height]);
+			} else {
+				this.ctx.fillStyle = `rgba(${this.playerClockSubTextColor}, ${this.opacity / 2})`;
+			}
 			this.ctx.rotate((Math.PI / 180) * -90);	
 			
 			this.ctx.fillText(
@@ -676,12 +706,6 @@ class TimeCanvasObject {
 			);
 			this.ctx.restore();
 		}
-
-		setTimeout(() => {
-			window.requestAnimationFrame(() => {
-				this.draw();
-			});
-		}, 500);
 	}
 
 	setCanvasDimensions() {

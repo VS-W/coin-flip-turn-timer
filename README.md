@@ -9,7 +9,7 @@ Tap on the green button or the time display to start the timer for that player. 
 ![](assets/flip_sample_2.png)
 
 ## TODO:
-- Darken time for inactive player.
+- Total match time.
 - Add a history coin flips, plus total count of each outcome.
 - Adapt font size for really small screens.
 - Confirmation on reset.
