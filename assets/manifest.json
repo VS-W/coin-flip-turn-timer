@@ -6,6 +6,12 @@
 			"sizes": "128x128",
 			"type": "image/png",
 			"purpose": "any"
+		},
+		{
+			"src": "launcher-icon-4x-maskable.png",
+			"sizes": "128x128",
+			"type": "image/png",
+			"purpose": "maskable"
 		}
 	],
 	"name": "Timer / Coin Flip",
