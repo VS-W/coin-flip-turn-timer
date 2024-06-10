@@ -1,0 +1,224 @@
+@font-face {
+	font-family: "Wellfleet";
+	src:
+		local("Wellfleet"),
+		url("wellfleet.woff2") format("woff2");
+}
+
+html,
+body {
+	background: #222;
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+#statusCanvas {
+	position: fixed;
+	z-index: 2;
+	pointer-events: none;
+}
+
+#uiCanvas {
+	position: fixed;
+	z-index: 3;
+}
+
+#settingsContainer {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	color: white;
+	font-family: 'Wellfleet';
+	font-size: 3em;
+	z-index: 100;
+	user-select: none;
+}
+
+#settingsInnerContainer {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: #111;
+	opacity: 0.95;
+	overflow-x: hidden;
+	overflow-y: scroll;
+}
+.settingsForm {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	height: 100%;
+	margin-bottom: 1em;
+}
+
+.removed {
+	display: none !important;
+}
+
+.removeAnimated {
+	animation: fadeOut 0.25s forwards;
+}
+
+.standard {
+	height: 100vh;
+	width: 100vw;
+}
+
+.rotate {
+	transform: rotate(90deg);
+	height: 100vw;
+	width: 100vh;
+}
+
+.settingsTitle {
+	margin: 0.5em 0;
+}
+
+#closeSettingsBtn {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	top: 0;
+	right: 0;
+	margin-top: 1em;
+	margin-right: 1em;
+	overflow: none;
+	padding: 0.15em 0.5em 0.25em 0.5em;
+	border-radius: 0.5em;
+	border: 0.1em white solid;
+	background-color: black;
+	font-size: 0.75em;
+}
+
+#settingsContainer input[type="checkbox"] {
+	width: 2.5em;
+	height: 2.5em;
+	appearance: none;
+	border-radius: 0.5em;
+	color: transparent;
+	background-color: red;
+	border: 0.25em darkred solid;
+}
+
+#settingsContainer input[type="checkbox"]:checked {
+	background-color: green;
+	border: 0.25em darkgreen solid;
+}
+
+#settingsContainer input[type="checkbox"]:after {
+	font-size: 1.5em;
+	content: '❌';
+	text-shadow: 0 -1px 0 darkred;
+}
+
+#settingsContainer input[type="checkbox"]:checked:after {
+	content: '✔️';
+	text-shadow: 0 -1px 0 lightgreen;
+}
+
+.settingsLine {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	margin-top: 0.5em;
+}
+
+.settingsLine label {
+	font-size: 0.75em;
+	margin-left: 0.25em;
+}
+
+.settingsNumberLine {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	margin-top: 0.5em;
+	margin-left: 1em;
+}
+
+.settingsNumberLine .numberInputContainer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	font-size: 0.75em;
+	margin-left: 0.25em;
+}
+
+.settingsNumberLine input[type="number"] {
+	width: 2em;
+	height: 1.25em;
+	margin: 0 0.5em;
+	background-color: #111;
+	color: white;
+	font-family: 'Wellfleet';
+	font-size: 0.75em;
+	appearance: textfield;
+	text-align: center;
+	outline: none;
+	border: 0.15em white solid;
+	border-radius: 0.25em;
+}
+
+.enabled {
+	animation: fadeBright 0.5s forwards;
+}
+
+.disabled {
+	animation: fadeDark 0.5s forwards;
+}
+
+@keyframes fadeDark {
+	0% {
+		filter: grayscale(0) brightness(1);
+		color: white;
+	}
+
+	100% {
+		filter: grayscale(1) brightness(0.75);
+		color: #aaa;
+	}
+}
+
+@keyframes fadeBright {
+	100% {
+		filter: grayscale(0) brightness(1);
+		color: white;
+	}
+
+	0% {
+		filter: grayscale(1) brightness(0.75);
+		color: #aaa;
+	}
+}
+
+@keyframes fadeOut {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		display: none !important;
+		opacity: 0;
+		z-index: -1;
+	}
+}

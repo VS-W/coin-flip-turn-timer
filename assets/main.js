@@ -17,6 +17,18 @@ class PlayerData {
 		this.currentPlayer = "a";
 		this.timerRunning = false;
 		this.turnStartTime = false;
+
+		this.playedNote = {
+			short: false,
+			medium: false,
+			long: false
+		}
+		audio["short-note"].pause();
+		audio["medium-note"].pause();
+		audio["long-note"].pause();
+		audio["short-note"].currentTime = 0;
+		audio["medium-note"].currentTime = 0;
+		audio["long-note"].currentTime = 0;
 	}
 
 	getPlayerTime(player) {
@@ -79,6 +91,12 @@ class PlayerData {
 			this.currentTurnTotal = 0;
 			this.currentPlayer = player;
 			this.startTimer();
+
+			this.playedNote = {
+				short: false,
+				medium: false,
+				long: false
+			}
 		}
 	}
 
@@ -116,28 +134,34 @@ class UICanvasObject {
 		this.playBtn = new Image(this.iconSize, this.iconSize),
 		this.pauseBtn = new Image(this.iconSize, this.iconSize),
 		this.fullscreenBtn = new Image(this.iconSize, this.iconSize);
+		this.settingsBtn = new Image(this.iconSize, this.iconSize);
 
 		this.playerAButton = this.playBtn;
 		this.playerBButton = this.playBtn;
 
+		this.refreshButtonCoords = [0, 0, 0, 0];
 		this.playerAButtonCoords = [0, 0, 0, 0];
 		this.playerBButtonCoords = [0, 0, 0, 0];
 		this.fullscreenButtonCoords = [0, 0, 0, 0];
-		this.refreshButtonCoords = [0, 0, 0, 0];
+		this.settingsButtonCoords = [0, 0, 0, 0];
 
 		this.refreshBtn.src = "assets/refresh.png";
 		this.playBtn.src = "assets/play.png";
 		this.pauseBtn.src = "assets/pause.png";
 		this.fullscreenBtn.src = "assets/fullscreen.png";
+		this.settingsBtn.src = "assets/settings.png";
 
+		this.refreshBtn.onload = () => {
+			this.draw();
+		};
 		this.playBtn.onload = () => {
-			this.draw()
+			this.draw();
 		};
 		this.fullscreenBtn.onload = () => {
-			this.draw()
+			this.draw();
 		};
-		this.refreshBtn.onload = () => {
-			this.draw()
+		this.settingsBtn.onload = () => {
+			this.draw();
 		};
 
 		this.setCanvasDimensions();
@@ -174,6 +198,10 @@ class UICanvasObject {
 				c.draw();
 				navigator.vibrate(500);
 			}
+			if (c.clickInBox(event.clientX, event.clientY, c.settingsButtonCoords)) {
+				document.querySelector("#settingsContainer").classList.remove("removed");
+				document.querySelector("#settingsContainer").classList.remove("removeAnimated");
+			}
 
 			// handle click on coin
 			if (!cylinder.disableClick) {
@@ -187,6 +215,9 @@ class UICanvasObject {
 					clearTimeout(uiDisplay.fadeInTimeout);
 					uiDisplay.fadeOut();
 					timeDisplay.fadeOut();
+					if (settings["play-coin-flip-sound"]) {
+						audio["coin-flip-sound"].play();
+					}
 					switch (flipCoin(camera, cylinder, true)) {
 						case "Heads!":
 							setTimeout(() => {
@@ -206,8 +237,8 @@ class UICanvasObject {
 								c.playerData.flips.history.push("T");
 							}, 2000);
 							break;
-						}
 					}
+				}
 			}
 		});
 	}
@@ -225,16 +256,19 @@ class UICanvasObject {
 		switch (button) {
 			case this.playBtn:
 				this.ctx.shadowColor = `rgba(0, 180, 0, 0.6)`;
-				break;		
+				break;
 			case this.pauseBtn:
 				this.ctx.shadowColor = `rgba(180, 0, 0, 0.6)`;
-				break;		
+				break;
 			case this.refreshBtn:
 				this.ctx.shadowColor = `rgba(235, 131, 52, 0.5)`;
-				break;		
-			case this.fullscreenBtn:
-				this.ctx.shadowColor = `rgba(237, 0, 229, 0.5)`;
-				break;	
+				break;
+				case this.fullscreenBtn:
+					this.ctx.shadowColor = `rgba(237, 0, 229, 0.5)`;
+					break;
+			case this.settingsBtn:
+				this.ctx.shadowColor = `rgba(0, 149, 162, 0.5)`;
+				break;
 		}	
 	}
 
@@ -397,6 +431,19 @@ class UICanvasObject {
 				-(this.iconSize / 2.5)
 			);
 			this.ctx.restore();
+
+			this.ctx.save();
+			this.setShadow(this.settingsBtn);
+			this.settingsButtonCoords = [
+				(this.iconSize / 2.5),
+				(this.canvas.height / 2) - (textHMetrics.width / 2) - (this.iconSize * 1.5),
+				this.iconSize, this.iconSize
+			];
+			this.ctx.drawImage(
+				this.settingsBtn,
+				...this.settingsButtonCoords
+			);
+			this.ctx.restore();
 		} else {
 			// pA coords
 			this.playerAButtonCoords = [
@@ -523,6 +570,19 @@ class UICanvasObject {
 				textT,
 				(this.canvas.width / 2) - textTMetrics.width + (textHMetrics.width / 2),
 				this.canvas.height - (this.iconSize / 2.5)
+			);
+			this.ctx.restore();
+
+			this.ctx.save();
+			this.setShadow(this.settingsBtn);
+			this.settingsButtonCoords = [
+				(this.canvas.width / 2) - (textHMetrics.width / 2) - (this.iconSize * 1.5),
+				this.canvas.height - this.iconSize - (this.iconSize / 2.5),
+				this.iconSize, this.iconSize
+			];
+			this.ctx.drawImage(
+				this.settingsBtn,
+				...this.settingsButtonCoords
 			);
 			this.ctx.restore();
 		}
@@ -652,7 +712,7 @@ class TimeCanvasObject {
 
 	drawBackground(shadowOffsetX, shadowOffsetY, shadowBlur, fillRect) {
 		this.ctx.save();
-		if (this.playerData.getCurrentTurnTotal() > 180000) {
+		if (this.playerData.getCurrentTurnTotal() > settings["changeBackgroundColorTime"]) {
 			if (!this.triggeredVibrate) {
 				this.triggeredVibrate = true;
 				navigator.vibrate([100, 100, 100, 100, 100]);
@@ -694,6 +754,21 @@ class TimeCanvasObject {
 		const pLastTurnTime = this.formatPlayerTime(this.playerData.lastTurnTime);
 		const cMatchTime = this.formatPlayerTime(this.playerData.getMatchTimeTotal());
 		const cTurnTime = this.formatPlayerTime(this.playerData.getCurrentTurnTotal());
+
+		if (settings["play-notes"]) {
+			if (settings["play-short-note"] && this.playerData.getCurrentTurnTotal() > settings["timerSounds1Time"] && !this.playerData.playedNote.short) {
+				this.playerData.playedNote.short = true;
+				audio["short-note"].play();
+			}
+			if (settings["play-medium-note"] && this.playerData.getCurrentTurnTotal() > settings["timerSounds2Time"] && !this.playerData.playedNote.medium) {
+				this.playerData.playedNote.medium = true;
+				audio["medium-note"].play();
+			}
+			if (settings["play-long-note"] && this.playerData.getCurrentTurnTotal() > settings["timerSounds3Time"] && !this.playerData.playedNote.long) {
+				this.playerData.playedNote.long = true;
+				audio["long-note"].play();
+			}
+		}
 
 		if (window.visualViewport.width < window.visualViewport.height) {
 			// main clock
@@ -1169,6 +1244,55 @@ function setCoinCanvasRotation() {
 	}
 }
 
+function settingsRotation() {
+	if (window.visualViewport.width < window.visualViewport.height) {
+		document.querySelector("#settingsInnerContainer").classList.add("rotate");
+	} else {
+		document.querySelector("#settingsInnerContainer").classList.remove("rotate");
+	}
+}
+
+function toggleDisabledInputs(checked) {
+	if (checked) {
+		document.querySelectorAll("[data-target-setting='timerSoundsSetting']").forEach(el => {
+			el.classList.remove("disabled");
+			el.classList.add("enabled");
+			el.querySelectorAll("input").forEach(input => {
+				input.disabled = false;
+			});
+		});
+	} else {
+		document.querySelectorAll("[data-target-setting='timerSoundsSetting']").forEach(el => {
+			el.classList.add("disabled");
+			el.classList.remove("enabled");
+			el.querySelectorAll("input").forEach(input => {
+				input.disabled = true;
+			});
+		});
+	}
+}
+
+const settings = {
+	"coin-flip-sound": "assets/coin-flip.ogg",
+	"short-note": "assets/kalimba-c-note.ogg",
+	"medium-note": "assets/synth-texture-02.ogg",
+	"long-note": "assets/clair-de-lune.ogg",
+	"play-coin-flip-sound": false,
+	"play-notes": false,
+	"play-short-note": false,
+	"play-medium-note": false,
+	"play-long-note": false
+};
+
+const audio = {
+	"coin-flip-sound": new Audio(settings["coin-flip-sound"]),
+	"short-note": new Audio(settings["short-note"]),
+	"medium-note": new Audio(settings["medium-note"]),
+	"long-note": new Audio(settings["long-note"])
+};
+
+audio["long-note"].playbackRate = 3;
+
 const ICON_SIZE = 60;
 const playerData = new PlayerData();
 const timeDisplay = new TimeCanvasObject(playerData);
@@ -1223,8 +1347,54 @@ flipCoin(camera, cylinder, false);
 renderer.render(scene, camera);
 
 document.body.appendChild(renderer.domElement);
+
 setCoinCanvasRotation();
+settingsRotation();
 
 window.addEventListener('resize', function () {
 	setCoinCanvasRotation();
+	settingsRotation();
 }, false);
+
+document.querySelector(".settingsForm").querySelectorAll("input[type='number']").forEach(input => {
+	input.parentElement.lastElementChild.textContent = input.value == 1 ? "minute" : "minutes";
+	settings[input.id] = input.value * 1000 * 60;
+	input.addEventListener("change", () => {
+		if (input.value < 0) {
+			input.value = 0;
+		}
+		input.parentElement.lastElementChild.textContent = input.value == 1 ? "minute" : "minutes";
+		settings[input.id] = input.value * 1000 * 60;
+	});
+});
+
+const audioToggle = document.querySelector("#audioToggle");
+toggleDisabledInputs(audioToggle.checked);
+settings["play-notes"] = audioToggle.checked;
+audioToggle.addEventListener("change", () => {
+	toggleDisabledInputs(audioToggle.checked);
+	settings["play-notes"] = audioToggle.checked;
+});
+
+document.querySelector("#closeSettingsBtn").addEventListener("click", () => {
+	document.querySelector("#settingsContainer").classList.add("removeAnimated");
+});
+
+settings["play-coin-flip-sound"] = document.querySelector("#coinflipAudioToggle").checked;
+settings["play-short-note"] = document.querySelector("#timerSounds1Toggle").checked;
+settings["play-medium-note"] = document.querySelector("#timerSounds2Toggle").checked;
+settings["play-long-note"] = document.querySelector("#timerSounds3Toggle").checked;
+document.querySelector("#coinflipAudioToggle").addEventListener("change", (e) => {
+	settings["play-coin-flip-sound"] = e.target.checked;
+});
+document.querySelector("#timerSounds1Toggle").addEventListener("change", (e) => {
+	settings["play-short-note"] = e.target.checked;
+	
+});
+document.querySelector("#timerSounds2Toggle").addEventListener("change", (e) => {
+	settings["play-medium-note"] = e.target.checked;
+});
+document.querySelector("#timerSounds3Toggle").addEventListener("change", (e) => {
+	settings["play-long-note"] = e.target.checked;
+	audio["long-note"].play();
+});
