@@ -1291,8 +1291,6 @@ const audio = {
 	"long-note": new Audio(settings["long-note"])
 };
 
-audio["long-note"].playbackRate = 3;
-
 const ICON_SIZE = 60;
 const playerData = new PlayerData();
 const timeDisplay = new TimeCanvasObject(playerData);
