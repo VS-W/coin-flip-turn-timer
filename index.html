@@ -8,37 +8,7 @@
 	<link rel="manifest" href="assets/manifest.json" />
 
 	<title>Timer / Coin Flip</title>
-	<style>
-		@font-face {
-			font-family: "Wellfleet";
-			src:
-				local("Wellfleet"),
-				url("assets/wellfleet.woff2") format("woff2");
-		}
-	  
-		html, body {
-			background: #222;
-			margin: 0;
-			padding: 0;
-			width: 100%;
-			height: 100%;
-			overflow: hidden;
-		}
-		body {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-		#statusCanvas {
-			position: fixed;
-			z-index: 2;
-			pointer-events: none;
-		}
-		#uiCanvas {
-			position: fixed;
-			z-index: 3;
-		}
-	</style>
+	<link rel="stylesheet" href="assets/style.css">
 
 	<script type="importmap">
 		{
@@ -52,7 +22,59 @@
 	<canvas id="statusCanvas"></canvas>
 	<canvas id="timeCanvas"></canvas>
 	<canvas id="uiCanvas"></canvas>
+	<div id="settingsContainer" class="removed">
+		<div id="settingsInnerContainer" class="standard rotate">
+			<div id="closeSettingsBtn"><div>exit</div></div>
+			<div class="settingsTitle">Settings</div>
+			<div class="settingsForm">
+				<div class="settingsLine">
+					<label>Background color changes</label>
+				</div>
+				<div class="settingsNumberLine" style="margin-left: 0em;">
+					<div class="numberInputContainer">
+						<label for="changeBackgroundColorTime">after</label>
+						<input type="number" id="changeBackgroundColorTime" value="2">
+						<label for="changeBackgroundColorTime">minutes</label>
+					</div>
+				</div>
+				<div class="settingsLine">
+					<input type="checkbox" id="coinflipAudioToggle" checked>
+					<label for="coinflipAudioToggle">Coin flip sound</label>
+				</div>
+				<div class="settingsLine">
+					<input type="checkbox" id="audioToggle">
+					<label for="audioToggle">Timer sounds:</label>
+				</div>
+				<div class="settingsNumberLine" data-target-setting="timerSoundsSetting">
+					<input type="checkbox" id="timerSounds1Toggle" checked>
+					<div class="numberInputContainer">
+						<label for="timerSounds1Toggle">after</label>
+						<input type="number" id="timerSounds1Time" value="2">
+						<label for="timerSounds1Time">minute</label>
+					</div>
+				</div>
+				<div class="settingsNumberLine" data-target-setting="timerSoundsSetting">
+					<input type="checkbox" id="timerSounds2Toggle" checked>
+					<div class="numberInputContainer">
+						<label for="timerSounds2Toggle">after</label>
+						<input type="number" id="timerSounds2Time" value="3">
+						<label for="timerSounds2Time">minutes</label>
+					</div>
+				</div>
+				<div class="settingsNumberLine" data-target-setting="timerSoundsSetting">
+					<input type="checkbox" id="timerSounds3Toggle" checked>
+					<div class="numberInputContainer">
+						<label for="timerSounds3Toggle">after</label>
+						<input type="number" id="timerSounds3Time" value="4">
+						<label for="timerSounds3Time">minutes</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
 	<script type="module" src="assets/main.js"></script>
+	<script>
+	</script>
 </body>
 </html>
